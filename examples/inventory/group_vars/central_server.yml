@@ -1,0 +1,5 @@
+---
+# central_loki: where Loki keeps its config and data, and who owns the directory.
+central_loki_dir: /srv/cache/loki
+central_loki_owner: homelab
+central_loki_group: homelab

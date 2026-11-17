@@ -1,0 +1,3 @@
+---
+dependencies:
+  - role: ziswb.homelab_platform.central_podman

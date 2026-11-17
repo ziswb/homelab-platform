@@ -1,0 +1,7 @@
+---
+# Loki on the central host (roles/central_loki). Privilege escalation is per
+# task; run with -K if the central host has no passwordless sudo.
+- name: Loki on the central host
+  hosts: central_server
+  roles:
+    - ziswb.homelab_platform.central_loki

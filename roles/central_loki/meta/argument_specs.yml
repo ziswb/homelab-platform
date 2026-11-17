@@ -1,0 +1,24 @@
+---
+argument_specs:
+  main:
+    short_description: Loki on the central host as a rootful Podman Quadlet
+    description:
+      - Runs Grafana Loki (single binary, filesystem storage, 30 days retention) as a rootful Podman Quadlet, C(loki.service), on port 3100.
+      - The directory holds the config file and the data tree; it is labelled C(container_file_t) by SELinux policy, not by C(:Z).
+    options:
+      central_loki_dir:
+        type: path
+        required: true
+        description:
+          - Directory for the config file and the data tree (logs, not backed up).
+          - The reference site keeps it on a cache disk; if that disk is missing, the unit fails instead of starting on an empty tree.
+      central_loki_owner:
+        type: str
+        required: true
+        description:
+          - Owner of O(central_loki_dir). The data directory inside is owned by Loki's container user (10001).
+      central_loki_group:
+        type: str
+        required: true
+        description:
+          - Group of O(central_loki_dir). The directory is not readable by other local accounts (mode 0750).

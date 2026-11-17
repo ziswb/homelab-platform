@@ -1,0 +1,6 @@
+---
+- name: Converge
+  hosts: central_server
+  gather_facts: true
+  roles:
+    - ziswb.homelab_platform.central_podman

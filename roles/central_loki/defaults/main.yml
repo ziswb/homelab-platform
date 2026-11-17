@@ -1,0 +1,5 @@
+---
+# Required, no defaults (site values, see meta/argument_specs.yml):
+#   central_loki_dir    directory for the config file and the data tree
+#   central_loki_owner  owner of central_loki_dir
+#   central_loki_group  group of central_loki_dir

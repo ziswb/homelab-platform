@@ -1,0 +1,9 @@
+# {{ ansible_managed }}
+[Unit]
+Description=Write pending OS updates and reboots for node_exporter's textfile collector
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/os-updates-textfile {{ central_os_updates_textfile_dir }}/os-updates.prom {{ central_os_updates_success_stamp }}
+Nice=10
+TimeoutStartSec=5min

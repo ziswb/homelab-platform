@@ -1,0 +1,74 @@
+#!/bin/bash
+# Write pending OS updates and reboots as node_exporter textfile metrics
+# (Rocky / dnf; ADR-0029). The k3s nodes have the apt variant
+# (roles/node_os_updates), with the same metric names.
+#
+# Usage: os-updates-textfile OUTPUT_FILE SUCCESS_STAMP
+#
+# Writes a temp file and renames it, so node_exporter never reads half a file.
+# On any error the old file stays and ages, which OsUpdatesMetricsMissing
+# reports.
+set -euo pipefail
+
+out=$1
+stamp=$2
+state=/var/lib/os-updates-textfile
+mkdir -p "$state"
+
+now=$(date +%s)
+boot=$(( now - $(cut -d. -f1 /proc/uptime) ))
+
+# Exit 1: a core package (kernel, glibc, systemd, ...) changed since the boot.
+rc=0
+dnf -q needs-restarting -r >/dev/null 2>&1 || rc=$?
+case $rc in
+  0) required=0 ;;
+  1) required=1 ;;
+  *) echo "dnf needs-restarting -r failed ($rc)" >&2; exit 1 ;;
+esac
+
+# Since when a reboot is pending; a remembered start from before the last boot
+# is stale.
+since_file=$state/reboot-required-since
+if [ "$required" = 1 ]; then
+  if [ ! -s "$since_file" ] || [ "$(cat "$since_file")" -lt "$boot" ]; then
+    echo "$now" > "$since_file"
+  fi
+  since=$(cat "$since_file")
+else
+  rm -f "$since_file"
+fi
+
+# From the metadata dnf-makecache.timer keeps; nothing is downloaded here.
+pending=$(dnf -q --cacheonly repoquery --upgrades --latest-limit 1 --qf '%{name}.%{arch}' | sort -u | grep -c . || true)
+security=$(dnf -q --cacheonly repoquery --upgrades --security --latest-limit 1 --qf '%{name}.%{arch}' | sort -u | grep -c . || true)
+
+last_success=0
+[ -e "$stamp" ] && last_success=$(stat -c %Y "$stamp")
+
+tmp=$(mktemp "$(dirname "$out")/.os-updates.XXXXXX")
+trap 'rm -f "$tmp"' EXIT
+{
+  echo "# HELP os_reboot_required 1 if installed updates wait for a reboot."
+  echo "# TYPE os_reboot_required gauge"
+  echo "os_reboot_required $required"
+  if [ "$required" = 1 ]; then
+    echo "# HELP os_reboot_required_since_timestamp_seconds Since when a reboot has been pending."
+    echo "# TYPE os_reboot_required_since_timestamp_seconds gauge"
+    echo "os_reboot_required_since_timestamp_seconds $since"
+  fi
+  echo "# HELP os_upgrades_pending Packages an upgrade would install now."
+  echo "# TYPE os_upgrades_pending gauge"
+  echo "os_upgrades_pending $pending"
+  echo "# HELP os_security_upgrades_pending Of those, packages with a security update."
+  echo "# TYPE os_security_upgrades_pending gauge"
+  echo "os_security_upgrades_pending $security"
+  echo "# HELP os_auto_update_last_success_timestamp_seconds Last successful automatic update run (0: none)."
+  echo "# TYPE os_auto_update_last_success_timestamp_seconds gauge"
+  echo "os_auto_update_last_success_timestamp_seconds $last_success"
+  echo "# HELP os_updates_textfile_last_run_timestamp_seconds When this file was written."
+  echo "# TYPE os_updates_textfile_last_run_timestamp_seconds gauge"
+  echo "os_updates_textfile_last_run_timestamp_seconds $now"
+} > "$tmp"
+chmod 0644 "$tmp"
+mv "$tmp" "$out"

@@ -1,0 +1,9 @@
+---
+# Automatic package updates on the central host, without reboots, plus the
+# pending-update and reboot metrics (roles/central_os_updates, ADR-0013).
+# Privilege escalation is per task; run with -K if the central host has no
+# passwordless sudo.
+- name: Automatic OS updates on the central host
+  hosts: central_server
+  roles:
+    - ziswb.homelab_platform.central_os_updates

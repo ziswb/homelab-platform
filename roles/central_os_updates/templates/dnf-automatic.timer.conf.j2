@@ -1,0 +1,6 @@
+# {{ ansible_managed }}
+# A fixed start instead of 06:00 plus a random hour (ADR-0029).
+[Timer]
+OnCalendar=
+OnCalendar=*-*-* {{ central_os_updates_start_time }}:00
+RandomizedDelaySec=0

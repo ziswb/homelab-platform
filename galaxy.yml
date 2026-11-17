@@ -4,7 +4,7 @@
 # variable, a renamed variable or a changed inventory group is a major release.
 namespace: ziswb
 name: homelab_platform
-version: 0.1.0
+version: 0.2.0
 readme: README.md
 authors:
   - Bruno Ziswiler

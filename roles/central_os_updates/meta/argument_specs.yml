@@ -1,0 +1,34 @@
+---
+argument_specs:
+  main:
+    short_description: Automatic package updates on the central host, without reboots
+    description:
+      - Installs and configures dnf-automatic to install updates every morning at a fixed time and never reboot (ADR-0013).
+      - Writes pending updates, a pending reboot and the last successful run as node_exporter textfile metrics, hourly.
+    options:
+      central_os_updates_upgrade_type:
+        type: str
+        default: default
+        choices: [default, security]
+        description:
+          - What dnf-automatic installs. V(default) is every update, V(security) only errata marked as security fixes.
+      central_os_updates_start_time:
+        type: str
+        default: "04:30"
+        description:
+          - Daily start, local time, C(HH:MM). A fixed start replaces the timer's default of 06:00 plus up to an hour at random.
+      central_os_updates_textfile_dir:
+        type: path
+        default: /var/lib/node_exporter/textfile
+        description:
+          - Directory read by node_exporter's textfile collector; the metrics go to C(os-updates.prom) there.
+      central_os_updates_textfile_on_calendar:
+        type: str
+        default: hourly
+        description:
+          - systemd C(OnCalendar=) value for writing the metrics.
+      central_os_updates_success_stamp:
+        type: path
+        default: /var/lib/os-updates-textfile/auto-update-success
+        description:
+          - File touched after each successful dnf-automatic run; its mtime is the last-success metric.

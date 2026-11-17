@@ -4,8 +4,8 @@ The order in which a new site applies the collection's playbooks. Each step
 depends on the ones before it. The playbooks are `ziswb.homelab_platform.<name>`
 and run standalone; `k3s_cluster` bundles the k3s install.
 
-> **Status:** planned for v1.0.0. The playbooks arrive with their roles; until
-> then this page is the target.
+> **Status:** the playbooks arrive with their roles until v1.0.0. Available
+> since 0.2.0: `central_loki`, `central_os_updates`.
 
 ## 0. Before: your site's own preparation
 

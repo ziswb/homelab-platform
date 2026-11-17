@@ -8,8 +8,9 @@ Traefik and MetalLB for ingress, Prometheus Operator, Loki and Alloy for
 monitoring. It is opinionated, not a general-purpose library; the decisions
 behind it are documented as [ADRs](docs/adr/).
 
-> **Status:** pre-1.0, no roles yet. The roles move in from a private
-> infrastructure repository; v1.0.0 is the first usable release.
+> **Status:** pre-1.0. The roles move in from a private infrastructure
+> repository in batches (0.2.0: the central host roles); v1.0.0 is the first
+> complete release. See [CHANGELOG](CHANGELOG.md).
 
 ## Supported
 

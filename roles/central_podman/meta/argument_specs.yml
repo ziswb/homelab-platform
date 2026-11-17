@@ -1,0 +1,8 @@
+---
+argument_specs:
+  main:
+    short_description: Install Podman for Quadlet-managed containers on the central host
+    description:
+      - Installs C(podman) and C(slirp4netns) and pins netavark's firewall driver to iptables (ADR-0008).
+      - Used as a meta dependency by the central host roles that run containers as rootful Podman Quadlets.
+    options: {}

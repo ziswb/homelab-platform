@@ -1,0 +1,11 @@
+# {{ ansible_managed }}
+[Unit]
+Description=Write pending OS updates and reboots for node_exporter every hour
+
+[Timer]
+OnBootSec=5min
+OnCalendar={{ central_os_updates_textfile_on_calendar }}
+RandomizedDelaySec=5min
+
+[Install]
+WantedBy=timers.target

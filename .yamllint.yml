@@ -2,9 +2,12 @@
 # yamllint settings compatible with ansible-lint's yaml rules.
 extends: default
 
+# roles/*/files/ holds files deployed as they are (ADR-0012): vendored upstream
+# YAML and configs whose bytes are the deployed state; they are not reformatted.
 ignore: |
   .cache/
   .venv/
+  roles/*/files/
 
 rules:
   braces:

@@ -1,0 +1,25 @@
+---
+# Automatic package updates on the central host (ADR-0013). dnf-automatic
+# installs every available update each morning and never reboots: a reboot of
+# the central host pauses everything that depends on it (file server,
+# databases, the k3s API endpoint, ...), so it stays the operator's call,
+# prompted by OsRebootPending.
+
+# What to install: "default" is every update, "security" only errata marked
+# as security fixes. Everything, like the k3s nodes (Ubuntu -updates included).
+central_os_updates_upgrade_type: default
+
+# Daily start, local time (dnf-automatic.timer; its default is 06:00 plus up
+# to an hour at random). Pick a time after the night's backups and before the
+# k3s nodes' own updates (ADR-0013: 05:00-06:30 in the reference site).
+central_os_updates_start_time: "04:30"
+
+# Metrics for node_exporter's textfile collector: the directory the host's
+# node_exporter reads (--collector.textfile.directory).
+central_os_updates_textfile_dir: /var/lib/node_exporter/textfile
+central_os_updates_textfile_on_calendar: hourly
+
+# Touched by dnf-automatic.service after a successful run; read by the metrics
+# script. The role creates it, so a host that never succeeds alerts three days
+# after this role first ran.
+central_os_updates_success_stamp: /var/lib/os-updates-textfile/auto-update-success

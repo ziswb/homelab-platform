@@ -1,0 +1,43 @@
+---
+# Single source of truth for installing Podman on the central host (Rocky Linux 10).
+# Consumed via meta/main.yml by every central role that runs containers as Podman
+# Quadlets (ADR-0008), in this collection (central_loki) and in a site's own
+# roles. Ansible deduplicates a shared role dependency, so this runs once per play
+# regardless of how many roles depend on it.
+#
+# Podman is daemonless: there is no service to enable. Containers are managed as
+# systemd services generated from Quadlet units in /etc/containers/systemd/.
+- name: Install Podman packages
+  ansible.builtin.package:
+    name:
+      - podman
+      - slirp4netns
+    state: present
+  become: true
+
+# Netavark's firewall driver is pinned rather than left at the Rocky 10 default
+# (nftables). It started as a Docker-coexistence measure (one shared ruleset for
+# both stacks) and is kept because this is the ruleset the reference host's
+# published ports have been verified against; firewalld is inactive there, so
+# nothing else arbitrates the chains. Changing it is a deliberate, reboot-verified
+# step, not a cleanup side effect (ADR-0008).
+# A fresh Rocky 10 install of podman does not create the drop-in directory.
+- name: Ensure the containers.conf drop-in directory exists
+  ansible.builtin.file:
+    path: /etc/containers/containers.conf.d
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  become: true
+
+- name: Configure netavark to use the iptables firewall driver
+  ansible.builtin.copy:
+    content: |
+      [network]
+      firewall_driver = "iptables"
+    dest: /etc/containers/containers.conf.d/50-firewall-driver.conf
+    owner: root
+    group: root
+    mode: '0644'
+  become: true

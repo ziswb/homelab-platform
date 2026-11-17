@@ -10,3 +10,5 @@ exclude_paths:
   - .cache/
   - .venv/
   - .github/
+  # Files deployed as they are (ADR-0012), not Ansible content.
+  - roles/*/files/

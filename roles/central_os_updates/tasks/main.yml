@@ -1,0 +1,138 @@
+---
+# Automatic package updates on the central host, without reboots (ADR-0013).
+
+# dnf-plugins-core brings `dnf needs-restarting`, read by the metrics script.
+- name: Install dnf-automatic
+  ansible.builtin.dnf:
+    name:
+      - dnf-automatic
+      - dnf-plugins-core
+    state: present
+  become: true
+
+# Edited key by key: the package's automatic.conf documents every option, and
+# a later package version may add new ones.
+- name: Configure dnf-automatic (install everything, never reboot)
+  community.general.ini_file:
+    path: /etc/dnf/automatic.conf
+    section: "{{ item.section }}"
+    option: "{{ item.option }}"
+    value: "{{ item.value }}"
+    no_extra_spaces: false
+    mode: '0644'
+  become: true
+  loop:
+    - { section: commands, option: upgrade_type, value: "{{ central_os_updates_upgrade_type }}" }
+    - { section: commands, option: download_updates, value: "yes" }
+    - { section: commands, option: apply_updates, value: "yes" }
+    - { section: commands, option: random_sleep, value: "0" }
+    - { section: commands, option: reboot, value: never }
+    # To the journal of dnf-automatic.service; no mail from the host.
+    - { section: emitters, option: emit_via, value: stdio }
+  loop_control:
+    label: "{{ item.section }}.{{ item.option }}"
+
+- name: Create the systemd drop-in directories
+  ansible.builtin.file:
+    path: "/etc/systemd/system/{{ item }}.d"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  become: true
+  loop:
+    - dnf-automatic.timer
+    - dnf-automatic.service
+
+- name: Fix the start time and record successful runs
+  ansible.builtin.template:
+    src: "{{ item }}.conf.j2"
+    dest: "/etc/systemd/system/{{ item }}.d/50-homelab.conf"
+    owner: root
+    group: root
+    mode: '0644'
+  become: true
+  loop:
+    - dnf-automatic.timer
+    - dnf-automatic.service
+  notify: Restart dnf-automatic timer
+
+- name: Create the state directory
+  ansible.builtin.file:
+    path: "{{ central_os_updates_success_stamp | dirname }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  become: true
+
+# Created once, never moved: counts as the last success until the first real
+# run, so OsAutoUpdatesStale fires if none succeeds within three days.
+- name: Start the success stamp
+  ansible.builtin.file:
+    path: "{{ central_os_updates_success_stamp }}"
+    state: touch
+    modification_time: preserve
+    access_time: preserve
+    owner: root
+    group: root
+    mode: '0644'
+  become: true
+
+- name: Enable the dnf-automatic timer
+  ansible.builtin.systemd_service:
+    name: dnf-automatic.timer
+    enabled: true
+    state: started
+    daemon_reload: true
+  become: true
+  # In --check the package is not installed, so the unit does not exist.
+  when: not ansible_check_mode
+
+# Also created by the host's node_exporter setup; whichever runs first.
+- name: Create the textfile collector directory
+  ansible.builtin.file:
+    path: "{{ central_os_updates_textfile_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  become: true
+
+- name: Install the metrics script
+  ansible.builtin.copy:
+    src: os-updates-textfile
+    dest: /usr/local/sbin/os-updates-textfile
+    owner: root
+    group: root
+    mode: '0755'
+  become: true
+
+- name: Install the metrics service and timer
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/etc/systemd/system/{{ item }}"
+    owner: root
+    group: root
+    mode: '0644'
+  become: true
+  loop:
+    - os-updates-textfile.service
+    - os-updates-textfile.timer
+  register: central_os_updates_units
+
+- name: Enable the metrics timer
+  ansible.builtin.systemd_service:
+    name: os-updates-textfile.timer
+    enabled: true
+    state: started
+    daemon_reload: "{{ central_os_updates_units is changed }}"
+  become: true
+  when: not (ansible_check_mode and central_os_updates_units is changed)
+
+- name: Write the metrics once
+  ansible.builtin.systemd_service:
+    name: os-updates-textfile.service
+    state: started
+  become: true
+  when: central_os_updates_units is changed and not ansible_check_mode

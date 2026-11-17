@@ -1,0 +1,20 @@
+---
+- name: Verify
+  hosts: central_server
+  gather_facts: false
+  tasks:
+    - name: Podman runs
+      ansible.builtin.command: podman --version
+      register: central_podman_version
+      changed_when: false
+
+    - name: Read the netavark firewall driver setting
+      ansible.builtin.slurp:
+        src: /etc/containers/containers.conf.d/50-firewall-driver.conf
+      register: central_podman_driver_conf
+
+    - name: Expect the iptables driver
+      ansible.builtin.assert:
+        that:
+          - "'firewall_driver = \"iptables\"' in (central_podman_driver_conf.content | b64decode)"
+          - central_podman_version.stdout is search('podman version')

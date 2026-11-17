@@ -1,0 +1,33 @@
+# {{ ansible_managed }}
+# Rootful Podman Quadlet: the generator turns this into loki.service on
+# systemd daemon-reload. There is no `systemctl enable` for generated units —
+# boot start comes from the [Install] section below.
+[Unit]
+Description=Grafana Loki log aggregation
+Wants=network-online.target
+After=network-online.target
+
+[Container]
+ContainerName=loki
+Image=docker.io/grafana/loki:3.7.9
+PublishPort=3100:3100
+# No :Z. Each new container gets random MCS categories, so :Z relabelled the
+# whole 30-day data tree on every start; on 2026-09-25 that took 77 s and the
+# start ran into systemd's 90 s timeout. The tree is labelled container_file_t
+# (s0, readable by any container) by policy instead — see the role's tasks.
+# Quadlet derives RequiresMountsFor= from these sources, so a missing cache SSD
+# (mounted nofail) fails the unit instead of starting Loki on an empty tree.
+Volume={{ central_loki_dir }}/loki-config.yaml:/etc/loki/local-config.yaml
+Volume={{ central_loki_dir }}/data:/loki
+Exec=-config.file=/etc/loki/local-config.yaml
+# Podman's default of 10 s is too short: Loki flushes its index on shutdown, and
+# on 2026-09-25 a restart ended in SIGKILL mid-flush.
+StopTimeout=60
+
+[Service]
+# Above StopTimeout, so systemd does not kill the unit before Podman is done.
+TimeoutStopSec=90
+Restart=always
+
+[Install]
+WantedBy=multi-user.target default.target

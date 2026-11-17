@@ -1,0 +1,79 @@
+---
+# Podman install is handled by the central_podman role (meta dependency).
+# Loki runs as a rootful Podman Quadlet (ADR-0008): templates/loki.container.j2 is
+# installed into /etc/containers/systemd/ and becomes loki.service.
+#
+# If central_loki_dir is on its own disk, keep the bare mount point underneath
+# immutable (chattr +i), so with the disk missing the directory tasks below fail
+# instead of creating the tree on the parent filesystem.
+
+# By policy, not by :Z (see templates/loki.container.j2), so neither a container
+# start nor a restorecon relabels the tree. New files inherit the label.
+- name: Label the loki tree container_file_t by policy
+  community.general.sefcontext:
+    target: "{{ central_loki_dir }}(/.*)?"
+    setype: container_file_t
+    state: present
+  become: true
+  register: central_loki_sefcontext
+
+- name: Ensure loki directory exists
+  ansible.builtin.file:
+    path: "{{ central_loki_dir }}"
+    state: directory
+    owner: "{{ central_loki_owner }}"
+    group: "{{ central_loki_group }}"
+    # Not readable by other local accounts: the logs.
+    # Loki itself reaches data/ through its bind mount, not through this path.
+    mode: '0750'
+    setype: container_file_t
+  become: true
+
+- name: Ensure loki data directory exists
+  ansible.builtin.file:
+    path: "{{ central_loki_dir }}/data"
+    state: directory
+    owner: "10001"
+    group: "10001"
+    mode: '0755'
+    setype: container_file_t
+  become: true
+
+# One-time walk when the rule is new: -F also resets MCS categories that copied-in
+# files may carry (s0:cNNN,cNNN from the old :Z era), which a container with other
+# categories cannot read. s0 is readable by any container. After the directory
+# tasks, so that on a fresh host there is a tree to walk.
+# Not a handler: it must run before the config is copied and Loki starts. It
+# runs only when the rule changed, so it reports changed whenever it runs.
+- name: Apply the label to the existing loki tree  # noqa: no-handler
+  ansible.builtin.command: restorecon -RF {{ central_loki_dir }}  # noqa: no-changed-when
+  become: true
+  when: central_loki_sefcontext.changed
+
+- name: Copy loki config file
+  ansible.builtin.copy:
+    src: loki-config.yaml
+    dest: "{{ central_loki_dir }}/loki-config.yaml"
+    owner: root
+    group: root
+    mode: '0644'
+    setype: container_file_t
+  become: true
+  notify: Restart loki
+
+- name: Install loki quadlet unit
+  ansible.builtin.template:
+    src: loki.container.j2
+    dest: /etc/containers/systemd/loki.container
+    owner: root
+    group: root
+    mode: '0644'
+  become: true
+  notify: Restart loki
+
+- name: Ensure loki service is running
+  ansible.builtin.systemd:
+    name: loki
+    state: started
+    daemon_reload: true
+  become: true
