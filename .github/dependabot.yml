@@ -31,6 +31,12 @@ updates:
     schedule:
       interval: weekly
       day: monday
+    # Digest updates of the same tag only: the tags are the supported OS
+    # releases (Ubuntu 24.04, Rocky Linux 10), which change by decision, not
+    # by Dependabot.
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
     groups:
       test-images:
         patterns: ["*"]
