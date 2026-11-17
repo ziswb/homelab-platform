@@ -1,0 +1,14 @@
+# Weekly update PRs for the GitHub Actions pins (commit SHA + tag comment), all
+# in one grouped PR. Collection dependencies follow galaxy.yml's ranges.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: "CI"

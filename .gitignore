@@ -1,0 +1,16 @@
+/.claude/settings.local.json
+
+# Output of `ansible-galaxy collection build`
+/ziswb-homelab_platform-*.tar.gz
+
+# Molecule, ansible-lint and Python caches
+.cache/
+__pycache__/
+*.pyc
+
+# IDE project files
+.idea/
+*.iml
+
+# macOS
+.DS_Store

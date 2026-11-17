@@ -1,0 +1,3 @@
+---
+# The minimum prereq enforces at run time.
+requires_ansible: ">=2.15.0"

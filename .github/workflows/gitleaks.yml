@@ -1,0 +1,53 @@
+# Leak guard, layer 1 (see .githooks/README.md): the public pattern rules in .gitleaks.toml
+# over the full history and every commit message, on every push (any branch: all of them are
+# public) and PR. The exact-value blocklist (layer 2) is private and runs only in the local hooks.
+name: Gitleaks
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # Superseded PR runs only: every commit pushed to a branch gets its own result.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  GITLEAKS_VERSION: "8.30.1"
+  GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb # linux_x64
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install gitleaks
+        run: |
+          tarball="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -fsSLo "$RUNNER_TEMP/$tarball" \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/$tarball"
+          echo "${GITLEAKS_SHA256}  $RUNNER_TEMP/$tarball" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/$tarball" -C "$RUNNER_TEMP" gitleaks
+      # The rules come from the default branch, not from the commit under scan:
+      # a branch or PR must not be able to weaken the rules it is checked with.
+      # A change to .gitleaks.toml takes effect once it is on main.
+      - name: Rules from the default branch
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: git show "origin/${DEFAULT_BRANCH}:.gitleaks.toml" > "$RUNNER_TEMP/gitleaks.toml"
+      - name: Scan history
+        run: |
+          "$RUNNER_TEMP/gitleaks" git --config "$RUNNER_TEMP/gitleaks.toml" --redact=100 --no-banner --verbose
+      # `gitleaks git` scans patches only; commit messages go through stdin.
+      - name: Scan commit messages
+        run: |
+          git log --all --format=%B \
+            | "$RUNNER_TEMP/gitleaks" stdin --config "$RUNNER_TEMP/gitleaks.toml" --redact=100 --no-banner --verbose

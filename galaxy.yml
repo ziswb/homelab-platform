@@ -1,0 +1,39 @@
+---
+# Collection metadata. Releases are git tags vX.Y.Z; CI checks that `version`
+# equals the tag. SemVer follows the roles' argument_specs: a new required
+# variable, a renamed variable or a changed inventory group is a major release.
+namespace: ziswb
+name: homelab_platform
+version: 0.1.0
+readme: README.md
+authors:
+  - Bruno Ziswiler
+description: >-
+  Reference platform for a small k3s homelab: k3s on Ubuntu nodes, a central
+  Podman host, CloudNativePG, cert-manager and monitoring. Opinionated and
+  documented; site values arrive as variables.
+license:
+  - Apache-2.0
+tags:
+  - k3s
+  - kubernetes
+  - homelab
+  - infrastructure
+  - linux
+dependencies:
+  kubernetes.core: ">=6.5.0,<7.0.0"
+  community.general: ">=0.0.0"
+  ansible.posix: ">=0.0.0"
+repository: https://github.com/ziswb/homelab-platform
+documentation: https://github.com/ziswb/homelab-platform#readme
+issues: https://github.com/ziswb/homelab-platform/issues
+build_ignore:
+  - .githooks
+  - .github
+  - .claude
+  - .cache
+  - .gitleaks.toml
+  - .gitignore
+  - .editorconfig
+  - CLAUDE.md
+  - "*.tar.gz"
