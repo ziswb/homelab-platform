@@ -1,0 +1,55 @@
+---
+# A release is a git tag vX.Y.Z (pushed by the maintainer). This refuses a tag
+# whose version differs from galaxy.yml and builds the collection tarball as a
+# workflow artifact. There is no Galaxy upload and no GitHub Release (yet).
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: .github/requirements-ci.txt
+      - name: Install tools
+        run: pip install -r .github/requirements-ci.txt
+      - name: galaxy.yml version equals the tag
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          version=$(python3 -c 'import yaml; print(yaml.safe_load(open("galaxy.yml"))["version"])')
+          echo "tag $TAG, galaxy.yml $version"
+          if [ "$TAG" != "v$version" ]; then
+            echo "::error::tag $TAG does not match galaxy.yml version $version"
+            exit 1
+          fi
+      - name: CHANGELOG has a section for the version
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          version="${TAG#v}"
+          # A heading "## X.Y.Z", optionally followed by a date.
+          if ! grep -Eq "^## ${version//./\\.}( |$)" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md has no section '## $version'"
+            exit 1
+          fi
+      - name: Build
+        run: ansible-galaxy collection build --output-path dist
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: collection
+          path: dist/*.tar.gz
+          if-no-files-found: error

@@ -1,0 +1,12 @@
+---
+# ansible-lint settings. The production profile is the bar for every role and
+# playbook (tier 1 CI).
+profile: production
+# Never install collections (into ~/.ansible or anywhere): CI and the README's
+# local steps install the collection and its dependencies explicitly.
+offline: true
+
+exclude_paths:
+  - .cache/
+  - .venv/
+  - .github/

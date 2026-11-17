@@ -1,0 +1,139 @@
+---
+# Tier 1 (lint, structure, build, syntax check) and tier 2 (Molecule) on every
+# push to main and every PR; `ci-ok` is the one check to require. Everything is
+# cheap, so there is no path filter. gitleaks.yml stays separate (every branch,
+# full history) and is the second required check.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # Superseded PR runs only: every commit pushed to main gets its own result.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  PYTHON_VERSION: "3.13"
+  COLLECTIONS_DIR: ${{ github.workspace }}/../collections
+
+jobs:
+  lint:
+    name: Tier 1 (lint, structure, syntax)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: .github/requirements-ci.txt
+      - name: Install tools
+        run: pip install -r .github/requirements-ci.txt
+      - name: yamllint
+        run: yamllint --strict .
+      - name: Structure (README + argument_specs per role, Docker-only Molecule)
+        run: scripts/check-structure.py
+      # Build and install the collection with its dependencies, so ansible-lint
+      # and the syntax check resolve every FQCN the way a user's install would.
+      - name: Build and install the collection
+        run: |
+          ansible-galaxy collection build --output-path "$RUNNER_TEMP"
+          ansible-galaxy collection install "$RUNNER_TEMP"/ziswb-homelab_platform-*.tar.gz \
+            -p "$COLLECTIONS_DIR"
+      - name: ansible-lint (production profile)
+        env:
+          ANSIBLE_COLLECTIONS_PATH: ${{ env.COLLECTIONS_DIR }}
+        run: ansible-lint --strict
+      - name: Syntax check every playbook against the example inventory
+        env:
+          ANSIBLE_COLLECTIONS_PATH: ${{ env.COLLECTIONS_DIR }}
+        run: |
+          found=0
+          for playbook in playbooks/*.yml; do
+            [ -e "$playbook" ] || continue
+            found=1
+            name=$(basename "$playbook" .yml)
+            echo "== ziswb.homelab_platform.$name"
+            ansible-playbook -i examples/inventory "ziswb.homelab_platform.$name" --syntax-check
+          done
+          [ "$found" = 1 ] || echo "no playbooks yet"
+
+  scenarios:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      list: ${{ steps.find.outputs.list }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Find the Molecule scenarios
+        id: find
+        run: |
+          list=$(find extensions/molecule -mindepth 2 -maxdepth 2 -name molecule.yml \
+            | awk -F/ '{print $3}' | sort | jq -R . | jq -cs .)
+          echo "list=$list" >>"$GITHUB_OUTPUT"
+          echo "$list"
+
+  molecule:
+    name: Tier 2 (Molecule ${{ matrix.scenario }})
+    needs: scenarios
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        scenario: ${{ fromJSON(needs.scenarios.outputs.list) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: .github/requirements-ci.txt
+      - name: Install tools
+        run: pip install -r .github/requirements-ci.txt
+      - name: Build the test images
+        run: scripts/molecule-images.sh
+      - name: Install the collection and the driver's collections
+        run: |
+          ansible-galaxy collection build --output-path "$RUNNER_TEMP"
+          ansible-galaxy collection install "$RUNNER_TEMP"/ziswb-homelab_platform-*.tar.gz \
+            -p "$COLLECTIONS_DIR"
+          ansible-galaxy collection install -r extensions/molecule/requirements.yml -p "$COLLECTIONS_DIR"
+      - name: molecule test
+        env:
+          ANSIBLE_COLLECTIONS_PATH: ${{ env.COLLECTIONS_DIR }}
+          SCENARIO: ${{ matrix.scenario }}
+          PY_COLORS: "1"
+          ANSIBLE_FORCE_COLOR: "1"
+        run: molecule test -s "$SCENARIO"
+
+  ci-ok:
+    if: always()
+    needs: [lint, scenarios, molecule]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # Failed, cancelled or skipped fails: every job here always runs.
+      - name: All jobs passed
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          echo "$RESULTS" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
+          failed=$(echo "$RESULTS" | jq -r '[to_entries[] | select(.value.result != "success") | .key] | join(" ")')
+          if [ -n "$failed" ]; then
+            echo "::error::failed: $failed"
+            exit 1
+          fi

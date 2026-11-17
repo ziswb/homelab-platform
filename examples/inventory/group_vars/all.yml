@@ -1,0 +1,5 @@
+---
+# Platform variables (docs/variables.md). Every site value is required; these
+# are example values. Secrets are not set here: resolve them in your own
+# inventory (vault, password manager lookup, ...).
+homelab_domain: home.arpa

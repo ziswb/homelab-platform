@@ -1,0 +1,18 @@
+---
+- name: Verify
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Wait for systemd to finish booting
+      # No module waits for the boot to finish.
+      ansible.builtin.command: systemctl is-system-running --wait  # noqa: command-instead-of-module
+      register: platform_smoke_state
+      changed_when: false
+      # "degraded" is normal in a container (units that need real hardware).
+      failed_when: platform_smoke_state.stdout not in ['running', 'degraded']
+
+    - name: Expect systemd as PID 1
+      ansible.builtin.command: cat /proc/1/comm
+      register: platform_smoke_pid1
+      changed_when: false
+      failed_when: platform_smoke_pid1.stdout != 'systemd'

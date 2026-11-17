@@ -1,0 +1,12 @@
+---
+- name: Converge
+  hosts: all
+  gather_facts: true
+  tasks:
+    - name: Expect the supported OS for each group
+      ansible.builtin.assert:
+        that: >-
+          (ansible_facts['distribution'] == 'Ubuntu' and ansible_facts['distribution_version'] == '24.04')
+          if 'server' in group_names else
+          (ansible_facts['os_family'] == 'RedHat' and ansible_facts['distribution_major_version'] == '10')
+        fail_msg: "unexpected OS {{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_version'] }}"

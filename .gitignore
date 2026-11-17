@@ -3,8 +3,9 @@
 # Output of `ansible-galaxy collection build`
 /ziswb-homelab_platform-*.tar.gz
 
-# Molecule, ansible-lint and Python caches
+# Molecule, ansible-lint and Python caches; the local tool venv
 .cache/
+.venv/
 __pycache__/
 *.pyc
 

@@ -1,0 +1,10 @@
+---
+# Collections the Molecule Docker driver needs (not a dependency of this
+# collection). CI installs them; locally:
+#   ansible-galaxy collection install -r extensions/molecule/requirements.yml
+collections:
+  - name: community.docker
+    version: "5.4.0"
+  # The driver's create playbook uses ansible.posix.synchronize; also a
+  # dependency of this collection (galaxy.yml), same open range.
+  - name: ansible.posix

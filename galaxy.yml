@@ -32,6 +32,11 @@ build_ignore:
   - .github
   - .claude
   - .cache
+  - .venv
+  - .ansible-lint
+  - .yamllint.yml
+  - extensions
+  - scripts
   - .gitleaks.toml
   - .gitignore
   - .editorconfig

@@ -1,0 +1,8 @@
+# Tool versions for CI (.github/workflows/ci.yml, release.yml). Use the same
+# set locally: python3 -m venv .venv && .venv/bin/pip install -r .github/requirements-ci.txt
+# Dependabot opens one grouped PR per week when one of them has a new release.
+ansible-core==2.22.0
+ansible-lint==26.11.0
+yamllint==1.38.0
+molecule==26.11.0
+molecule-plugins[docker]==26.11.0

@@ -29,10 +29,32 @@ people's names, and credentials of any kind.
 
 ## Testing: Molecule with the Docker driver only
 
-Molecule scenarios use the **Docker driver** (Ubuntu 24.04 systemd container) and
-nothing else: never the `delegated` driver, never an inventory that reaches a real host
-or cluster. Do not run playbooks against real hosts from this repo; `--syntax-check` and
-`--list-*` against the example inventory are fine.
+Molecule scenarios use the **Docker driver** and nothing else: never the `delegated`
+driver, never an inventory that reaches a real host or cluster
+(`scripts/check-structure.py` enforces the driver in CI). Do not run playbooks against
+real hosts from this repo; `--syntax-check` and `--list-*` against the example inventory
+are fine.
+
+- Scenarios live in `extensions/molecule/<role>/` (Molecule's collection layout, run
+  from the repo root: `molecule test -s <role>`). Platforms use the prebuilt systemd
+  images from `scripts/molecule-images.sh` (`extensions/molecule/images/`: Ubuntu 24.04
+  for node roles, Rocky Linux 10 for `central_*`); copy the platform block from
+  `platform_smoke`, including `override_command: false` (otherwise the driver replaces
+  systemd with a sleep loop).
+- Driver collections: `extensions/molecule/requirements.yml`. Every scenario sets
+  `prerun: false` and `.ansible-lint` sets `offline: true`: neither tool may install
+  collections into `~/.ansible`, where the infrastructure workstation resolves them. With Rancher Desktop set
+  `DOCKER_HOST` from the Docker context (README "Development").
+
+## CI
+
+`.github/workflows/ci.yml`: tier 1 (yamllint, ansible-lint production profile, the
+structure check, collection build + install, `--syntax-check` of every playbook by FQCN
+against `examples/inventory/`) and tier 2 (one Molecule job per scenario); `ci-ok` is the
+required check. `gitleaks.yml` scans every branch; `release.yml` on a `v*` tag checks
+`galaxy.yml`'s version and the CHANGELOG section and builds the tarball. Tool versions
+are pinned in `.github/requirements-ci.txt`, actions by commit SHA with the tag as a
+comment, test-image bases by digest; Dependabot bumps all three weekly.
 
 ## Collection rules
 
@@ -48,4 +70,7 @@ or cluster. Do not run playbooks against real hosts from this repo; `--syntax-ch
 - **No improvements while moving a role** in from `infrastructure`: the move must
   render the same result (zero-diff check on the consuming side). Improvements go to
   the backlog and come in a later release.
-- Supported: Ubuntu 24.04, arm64 + amd64, k3s only. No Raspberry Pi assumptions.
+- Supported: k3s nodes on Ubuntu 24.04, the central host on Rocky Linux 10 (RHEL 10
+  family); arm64 + amd64; k3s only. No Raspberry Pi assumptions.
+- `docs/variables.md` lists the platform variables (`homelab_*`) and
+  `docs/bring-up.md` the playbook order; update both when a role moves in.

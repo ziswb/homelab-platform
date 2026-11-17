@@ -15,7 +15,8 @@ behind it are documented as ADRs.
 
 | | |
 |---|---|
-| Operating system | Ubuntu 24.04 LTS |
+| k3s nodes (`server`, `agent`) | Ubuntu 24.04 LTS |
+| Central host (`central_server`) | Rocky Linux 10 (RHEL 10 family) |
 | Architectures | arm64, amd64 |
 | Kubernetes | k3s only |
 | Ansible | ansible-core 2.15 or later |
@@ -37,6 +38,10 @@ behind it are documented as ADRs.
   `<role>_extra_*`, optional features `<role>_*_enabled`. Each Kubernetes
   resource is owned by exactly one role.
 
+Details: [docs/variables.md](docs/variables.md) (the variable vocabulary),
+[docs/bring-up.md](docs/bring-up.md) (the order a new site applies the
+playbooks), [examples/inventory/](examples/inventory/) (an inventory skeleton).
+
 ## Install
 
 There is no Galaxy release; install a tagged version from git:
@@ -55,6 +60,38 @@ ansible-galaxy collection install -r requirements.yml
 
 Releases follow [SemVer](https://semver.org/): a new required variable, a
 renamed variable or a changed inventory group is a major release.
+
+## Development
+
+CI (`.github/workflows/ci.yml`) runs on every push and PR:
+
+- **Tier 1:** yamllint, ansible-lint (production profile), a structure check
+  (`scripts/check-structure.py`: README and argument specs per role, Docker-only
+  Molecule), the collection build, and `--syntax-check` of every playbook
+  against the example inventory.
+- **Tier 2:** Molecule scenarios in `extensions/molecule/`, Docker driver, on
+  systemd test images (Ubuntu 24.04 for node roles, Rocky Linux 10 for central
+  host roles).
+
+Locally:
+
+```bash
+python3 -m venv .venv && .venv/bin/pip install -r .github/requirements-ci.txt
+. .venv/bin/activate
+# A project-local collections path: nothing goes into ~/.ansible.
+export ANSIBLE_COLLECTIONS_PATH="$PWD/.cache/collections"
+ansible-galaxy collection build --force --output-path .cache
+ansible-galaxy collection install --force .cache/ziswb-homelab_platform-*.tar.gz
+ansible-galaxy collection install -r extensions/molecule/requirements.yml
+
+yamllint --strict . && ansible-lint --strict && scripts/check-structure.py
+scripts/molecule-images.sh
+molecule test -s platform_smoke
+```
+
+With a Docker context other than the default socket (Rancher Desktop, Colima),
+set `DOCKER_HOST=$(docker context inspect --format '{{.Endpoints.docker.Host}}')`
+for Molecule.
 
 ## Security
 

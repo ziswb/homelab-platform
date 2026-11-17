@@ -1,5 +1,8 @@
-# Weekly update PRs for the GitHub Actions pins (commit SHA + tag comment), all
-# in one grouped PR. Collection dependencies follow galaxy.yml's ranges.
+---
+# Weekly update PRs, one grouped PR per ecosystem: the GitHub Actions pins
+# (commit SHA + tag comment), the CI tool versions (.github/requirements-ci.txt)
+# and the Molecule test images' base digests. Collection dependencies follow
+# galaxy.yml's ranges.
 version: 2
 updates:
   - package-ecosystem: github-actions
@@ -12,3 +15,24 @@ updates:
         patterns: ["*"]
     commit-message:
       prefix: "CI"
+  - package-ecosystem: pip
+    directory: /.github
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      ci-tools:
+        patterns: ["*"]
+    commit-message:
+      prefix: "CI"
+  - package-ecosystem: docker
+    directories:
+      - /extensions/molecule/images/*
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      test-images:
+        patterns: ["*"]
+    commit-message:
+      prefix: "Test images"

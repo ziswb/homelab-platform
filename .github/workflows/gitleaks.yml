@@ -1,3 +1,4 @@
+---
 # Leak guard, layer 1 (see .githooks/README.md): the public pattern rules in .gitleaks.toml
 # over the full history and every commit message, on every push (any branch: all of them are
 # public) and PR. The exact-value blocklist (layer 2) is private and runs only in the local hooks.
