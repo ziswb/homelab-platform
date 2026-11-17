@@ -1,0 +1,7 @@
+---
+argument_specs:
+  main:
+    short_description: node-exporter DaemonSet behind kube-rbac-proxy, with its ServiceMonitor
+    description:
+      - Deploys node-exporter on every node (host network, port 9100 through kube-rbac-proxy over TLS) in namespace C(monitoring), with a ServiceMonitor.
+    options: {}

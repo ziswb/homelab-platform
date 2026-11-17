@@ -1,0 +1,9 @@
+---
+# The kube-state-metrics exporter (roles/kube_state_metrics). Runs on localhost against the cluster in the current
+# kubeconfig context.
+- name: The kube-state-metrics exporter
+  hosts: localhost
+  become: false
+  gather_facts: true
+  roles:
+    - role: ziswb.homelab_platform.kube_state_metrics

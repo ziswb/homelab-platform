@@ -1,0 +1,9 @@
+---
+# node-exporter on every node (roles/node_exporter). Runs on localhost against the cluster in the current
+# kubeconfig context.
+- name: The node-exporter DaemonSet on every node
+  hosts: localhost
+  become: false
+  gather_facts: true
+  roles:
+    - role: ziswb.homelab_platform.node_exporter

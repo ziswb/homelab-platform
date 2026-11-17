@@ -5,6 +5,9 @@ profile: production
 # Never install collections (into ~/.ansible or anywhere): CI and the README's
 # local steps install the collection and its dependencies explicitly.
 offline: true
+# Deliberate exceptions are inline noqa comments with the reason, e.g.
+# helm_preflight's helm_binary/helm_version_* keep their names (shared by every
+# Helm role and by consuming sites; renaming is an interface change).
 
 exclude_paths:
   - .cache/

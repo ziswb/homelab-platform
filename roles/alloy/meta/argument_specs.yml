@@ -1,0 +1,13 @@
+---
+argument_specs:
+  main:
+    short_description: Grafana Alloy DaemonSet shipping pod logs to Loki
+    description:
+      - Runs Grafana Alloy on every node (control plane included) in namespace C(logging).
+      - It tails C(/var/log/pods), parses CRI lines, joins multi-line entries and pushes to Loki with the labels namespace, pod, container, job and node.
+    options:
+      homelab_loki_url:
+        type: str
+        required: true
+        description:
+          - Base URL of Loki, without the API path, e.g. C(http://loki.example.com:3100) (C(central_loki) listens on port 3100).

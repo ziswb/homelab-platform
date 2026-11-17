@@ -1,0 +1,11 @@
+---
+# The helm the Helm-based roles run, and the version range this collection is
+# tested with. Tool policy, not site values: a site may override them (e.g. a
+# path to a second helm for a deliberate test).
+helm_binary: helm  # noqa: var-naming[no-role-prefix]
+# Helm 4.2 or later, below Helm 5.
+helm_version_min: "4.2.0"  # noqa: var-naming[no-role-prefix]
+helm_version_max: "5.0.0"  # noqa: var-naming[no-role-prefix]
+# helm-diff below 3.14.0 does not run under Helm 4, and kubernetes.core
+# quietly degrades its change detection below its own minimum.
+helm_diff_version_min: "3.14.0"  # noqa: var-naming[no-role-prefix]

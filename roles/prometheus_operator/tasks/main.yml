@@ -1,0 +1,24 @@
+---
+# files/bundle.yaml is vendored (ADR-0012): replace it only with the next
+# upstream release, moved from namespace default to monitoring; its first line
+# names the version.
+- name: Create namespace 'monitoring'
+  kubernetes.core.k8s:
+    apply: true
+    server_side_apply:
+      field_manager: ansible
+      force_conflicts: true
+    name: monitoring
+    api_version: v1
+    kind: Namespace
+    state: present
+
+- name: Apply prometheus operator manifest.
+  kubernetes.core.k8s:
+    state: present
+    src: "{{ role_path }}/files/bundle.yaml"
+    apply: true
+    force: true
+    server_side_apply:
+      field_manager: "ansible/force"
+      force_conflicts: true

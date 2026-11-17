@@ -1,0 +1,9 @@
+---
+# cert-manager and the private CA chain (ADR-0007) (roles/cert_manager). Runs on localhost against the cluster in the current
+# kubeconfig context.
+- name: The cert-manager chart and the private CA chain (ADR-0007)
+  hosts: localhost
+  become: false
+  gather_facts: true
+  roles:
+    - role: ziswb.homelab_platform.cert_manager

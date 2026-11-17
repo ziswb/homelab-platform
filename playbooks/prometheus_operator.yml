@@ -1,0 +1,9 @@
+---
+# The Prometheus operator (CRDs and operator) (roles/prometheus_operator). Runs on localhost against the cluster in the current
+# kubeconfig context.
+- name: The Prometheus operator (CRDs and operator)
+  hosts: localhost
+  become: false
+  gather_facts: true
+  roles:
+    - role: ziswb.homelab_platform.prometheus_operator

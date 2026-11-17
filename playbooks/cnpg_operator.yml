@@ -1,0 +1,9 @@
+---
+# The CloudNativePG operator (roles/cnpg_operator). Runs on localhost against the cluster in the current
+# kubeconfig context.
+- name: The CloudNativePG operator
+  hosts: localhost
+  become: false
+  gather_facts: true
+  roles:
+    - role: ziswb.homelab_platform.cnpg_operator

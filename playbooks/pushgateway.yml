@@ -1,0 +1,9 @@
+---
+# The Prometheus Pushgateway (roles/pushgateway). Runs on localhost against the cluster in the current
+# kubeconfig context.
+- name: The Prometheus Pushgateway
+  hosts: localhost
+  become: false
+  gather_facts: true
+  roles:
+    - role: ziswb.homelab_platform.pushgateway

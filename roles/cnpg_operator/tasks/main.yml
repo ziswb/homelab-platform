@@ -1,0 +1,31 @@
+---
+# CloudNativePG operator. It manages the site's database Clusters, which are the
+# site's own (not in this collection). Its webhook certificate is its own (no
+# cert-manager involved).
+- name: Install the CloudNativePG operator
+  kubernetes.core.helm:
+    binary_path: "{{ helm_binary }}"
+    name: cnpg
+    release_namespace: "{{ cnpg_operator_namespace }}"
+    create_namespace: true
+    # Straight from the repository URL, no `helm repo add`: --check then
+    # works on a workstation that never added it.
+    chart_repo_url: "{{ cnpg_operator_chart_url }}"
+    chart_ref: cloudnative-pg
+    chart_version: "{{ cnpg_operator_chart_version }}"
+    state: present
+    # A Cluster is rejected until the webhook answers.
+    wait: true
+    wait_timeout: 5m
+    values:
+      # The chart's default. Its CRDs carry `helm.sh/resource-policy: keep`, so
+      # a `helm uninstall` leaves them, and with them the Cluster and its
+      # database, in place.
+      crds:
+        create: true
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          memory: 256Mi

@@ -1,0 +1,9 @@
+---
+# Alloy, shipping pod logs to Loki (roles/alloy). Runs on localhost against the cluster in the current
+# kubeconfig context.
+- name: Alloy, shipping pod logs to Loki
+  hosts: localhost
+  become: false
+  gather_facts: true
+  roles:
+    - role: ziswb.homelab_platform.alloy

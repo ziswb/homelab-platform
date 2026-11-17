@@ -1,0 +1,15 @@
+---
+- name: Apply node exporter resources
+  kubernetes.core.k8s:
+    apply: true
+    server_side_apply:
+      field_manager: ansible
+      force_conflicts: true
+    definition: "{{ lookup('template', item) | from_yaml_all | list }}"
+  loop:
+    - cluster-role.yaml.j2
+    - cluster-role-binding.yaml.j2
+    - daemonset.yaml.j2
+    - service.yaml.j2
+    - service-account.yaml.j2
+    - service-monitor.yaml.j2

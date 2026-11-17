@@ -3,3 +3,5 @@
 # are example values. Secrets are not set here: resolve them in your own
 # inventory (vault, password manager lookup, ...).
 homelab_domain: home.arpa
+# Where alloy pushes logs: central_loki on the central host, port 3100.
+homelab_loki_url: "http://loki.{{ homelab_domain }}:3100"

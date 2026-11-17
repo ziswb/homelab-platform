@@ -38,6 +38,7 @@ The names are fixed; the roles and playbooks refer to them.
 | Variable | Type | Required | Used by | Meaning |
 |---|---|---|---|---|
 | `homelab_domain` | str | yes | host name defaults | The site's DNS domain, e.g. `home.arpa` or `lab.example.com`. |
+| `homelab_loki_url` | str | yes | `alloy` | Base URL of Loki (`central_loki` listens on 3100), e.g. `http://loki.example.com:3100`. |
 
 Rows are added with the roles that read them; each role move decides the
 public form of the variables it needs.

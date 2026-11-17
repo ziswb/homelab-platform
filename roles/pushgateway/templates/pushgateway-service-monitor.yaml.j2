@@ -1,0 +1,25 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    app.kubernetes.io/component: exporter
+    app.kubernetes.io/name: pushgateway
+    app.kubernetes.io/part-of: kube-prometheus
+    app.kubernetes.io/version: 1.11.0
+    name: pushgateway
+  name: pushgateway
+  namespace: monitoring
+spec:
+  namespaceSelector:
+    matchNames:
+      - monitoring
+  endpoints:
+    - port: metrics
+      interval: 30s
+      honorLabels: true
+  jobLabel: app.kubernetes.io/name
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: exporter
+      app.kubernetes.io/name: pushgateway
+      app.kubernetes.io/part-of: kube-prometheus

@@ -1,0 +1,9 @@
+---
+# The Traefik ServiceMonitor (roles/traefik_service_monitor). Runs on localhost against the cluster in the current
+# kubeconfig context.
+- name: The Traefik ServiceMonitor
+  hosts: localhost
+  become: false
+  gather_facts: true
+  roles:
+    - role: ziswb.homelab_platform.traefik_service_monitor

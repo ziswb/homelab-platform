@@ -1,0 +1,18 @@
+---
+argument_specs:
+  main:
+    short_description: cert-manager with a private CA chain and the homelab-ca ClusterIssuer
+    description:
+      - Installs the cert-manager chart (CRDs included and kept when the release is removed) and sets up a private chain (ADR-0007).
+      - A self-signed bootstrap ClusterIssuer signs a 10-year ECDSA root CA in Secret C(homelab-root-ca-secret), which backs the ClusterIssuer C(homelab-ca).
+    options:
+      cert_manager_chart_version:
+        type: str
+        default: v1.21.3
+        description:
+          - Version of the jetstack/cert-manager chart.
+      helm_binary:
+        type: str
+        default: helm
+        description:
+          - The helm executable; default from the C(helm_preflight) dependency.

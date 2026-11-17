@@ -1,0 +1,29 @@
+---
+argument_specs:
+  main:
+    short_description: Assert a supported helm (and helm-diff) before any chart task
+    description:
+      - Resolves O(helm_binary) and asserts its version is inside [O(helm_version_min), O(helm_version_max)).
+      - With Helm 4, also asserts that the helm-diff plugin is at least O(helm_diff_version_min).
+      - A meta dependency of every Helm-based role; it runs once per play and fails before a chart upgrade starts.
+    options:
+      helm_binary:
+        type: str
+        default: helm
+        description:
+          - The helm executable, a bare name resolved from PATH or a path. The Helm-based roles use it too.
+      helm_version_min:
+        type: str
+        default: "4.2.0"
+        description:
+          - Lowest supported helm version (inclusive).
+      helm_version_max:
+        type: str
+        default: "5.0.0"
+        description:
+          - First unsupported helm version (exclusive).
+      helm_diff_version_min:
+        type: str
+        default: "3.14.0"
+        description:
+          - Lowest helm-diff plugin version accepted with Helm 4. A missing plugin only warns.

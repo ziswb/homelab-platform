@@ -1,0 +1,115 @@
+---
+# Asserts the helm binary is present and inside the supported version range.
+# Included as a meta-dependency by every Helm-based role, so it runs once per play
+# (role dependencies are deduplicated unless allow_duplicates is set) and fails
+# fast with a readable message instead of part-way through a chart upgrade.
+
+# `helm_binary` is normally the bare name `helm`, so record what PATH actually
+# resolved it to: with no path pinned in the repo, the run output is the only place
+# that says which of the workstation's helms did the work.
+# shell, not command: `command -v` is a shell builtin.
+- name: Resolve the helm binary to a path
+  ansible.builtin.shell:  # noqa: command-instead-of-shell
+    cmd: "command -v {{ helm_binary }}"
+  register: helm_preflight_which
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Record the resolved helm path
+  ansible.builtin.set_fact:
+    helm_preflight_path: "{{ helm_preflight_which.stdout | trim | default(helm_binary, true) }}"
+
+- name: Read the helm client version
+  ansible.builtin.command:
+    cmd: "{{ helm_binary }} version --short"
+  register: helm_preflight_version
+  changed_when: false
+  failed_when: false
+  # Read-only probe: run it under --check too, or every later task here sees an
+  # empty register and the whole preflight explodes instead of asserting.
+  check_mode: false
+
+- name: Fail clearly when the helm binary is missing or unusable
+  ansible.builtin.fail:
+    msg: >-
+      Cannot run '{{ helm_binary }} version --short' (rc={{ helm_preflight_version.rc }}).
+      Set `helm_binary` in the inventory, or pass -e helm_binary=/path/to/helm.
+      stderr: {{ helm_preflight_version.stderr | default('') | trim }}
+  when: helm_preflight_version.rc != 0
+
+# `helm version --short` prints e.g. "v3.21.4+g813176c"; take the numeric core.
+- name: Record the parsed helm version
+  ansible.builtin.set_fact:
+    helm_preflight_parsed: >-
+      {{ helm_preflight_version.stdout | regex_search('v?([0-9]+\.[0-9]+\.[0-9]+)', '\1') | first }}
+
+- name: Assert the helm version is inside the supported range
+  ansible.builtin.assert:
+    that:
+      - helm_preflight_parsed is version(helm_version_min, '>=')
+      - helm_preflight_parsed is version(helm_version_max, '<')
+    fail_msg: >-
+      helm {{ helm_preflight_parsed }} at '{{ helm_preflight_path }}' is outside the supported
+      range [{{ helm_version_min }}, {{ helm_version_max }}).
+      The range is a deliberate choice, not a compatibility limit — with the binary
+      resolved from PATH it is also the only thing standing between the roles and
+      whichever helm a workstation happens to expose first.
+      To proceed anyway, widen the bound you are hitting: -e helm_version_min=3.18.0
+      (a helm@3 fallback needs -e helm_binary=... as well) or -e helm_version_max=6.0.0
+    success_msg: "helm {{ helm_preflight_parsed }} at '{{ helm_preflight_path }}' is supported."
+
+# Only a Helm 4 concern. kubernetes.core checks the plugin version itself and, when
+# it is too old, warns and falls back to `default_check()` instead of failing — so
+# the cost of an outdated plugin is silently unreliable `changed` and `--check`
+# results. Assert it here where it is visible. helm-diff below 3.14.0 is also simply
+# not runnable by Helm 4: 3.9.13 listed fine but died with `unknown command "diff"`.
+- name: Read the installed helm plugins
+  ansible.builtin.command:
+    cmd: "{{ helm_binary }} plugin list"
+  register: helm_preflight_plugins
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  when: helm_preflight_parsed is version('4.0.0', '>=')
+
+# `helm plugin list` is a tab-separated table whose columns differ between majors;
+# only the leading name and version columns are stable, so match on those alone.
+# Empty string means the plugin is not installed at all.
+- name: Record the installed helm-diff version
+  ansible.builtin.set_fact:
+    helm_preflight_diff_version: >-
+      {{ helm_preflight_plugins.stdout
+         | regex_search('(?m)^diff[ \t]+[0-9][0-9.]*')
+         | default('', true)
+         | regex_search('[0-9][0-9.]*')
+         | default('', true) }}
+  when: helm_preflight_parsed is version('4.0.0', '>=')
+
+- name: Warn when helm-diff is missing entirely
+  ansible.builtin.debug:
+    msg: >-
+      helm-diff is not installed for '{{ helm_preflight_path }}'. Chart tasks still run, but
+      idempotency checks degrade to a coarse comparison and `--check` shows no diffs.
+      Install it with:
+      {{ helm_preflight_path }} plugin install https://github.com/databus23/helm-diff
+      --version v{{ helm_diff_version_min }} --verify=false
+  when:
+    - helm_preflight_parsed is version('4.0.0', '>=')
+    - helm_preflight_diff_version | length == 0
+
+- name: Assert helm-diff is new enough for this helm major
+  ansible.builtin.assert:
+    that:
+      - helm_preflight_diff_version is version(helm_diff_version_min, '>=')
+    fail_msg: >-
+      helm-diff {{ helm_preflight_diff_version }} is too old for helm
+      {{ helm_preflight_parsed }} — kubernetes.core requires >= {{ helm_diff_version_min }}
+      and quietly downgrades its change detection below that. Reinstall with:
+      {{ helm_preflight_path }} plugin uninstall diff &&
+      {{ helm_preflight_path }} plugin install https://github.com/databus23/helm-diff
+      --version v{{ helm_diff_version_min }} --verify=false
+    success_msg: "helm-diff {{ helm_preflight_diff_version }} is supported."
+  when:
+    - helm_preflight_parsed is version('4.0.0', '>=')
+    - helm_preflight_diff_version | length > 0

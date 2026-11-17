@@ -1,0 +1,7 @@
+---
+argument_specs:
+  main:
+    short_description: kube-state-metrics in namespace monitoring, with its ServiceMonitor
+    description:
+      - Deploys kube-state-metrics v2.20.0 (ClusterRole, binding, Deployment, headless Service, ServiceAccount, ServiceMonitor) in namespace C(monitoring).
+    options: {}

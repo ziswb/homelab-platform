@@ -1,0 +1,7 @@
+---
+argument_specs:
+  main:
+    short_description: ServiceMonitor for the kubelet, cAdvisor and probe metrics
+    description:
+      - Creates the kubelet ServiceMonitor in namespace C(monitoring) (kubelet, cAdvisor and probe endpoints), dropping the series no rule or dashboard uses.
+    options: {}

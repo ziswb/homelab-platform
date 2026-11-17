@@ -1,0 +1,77 @@
+---
+# A private CA chain (ADR-0007): self-signed bootstrap issuer -> 10-year root CA
+# -> ClusterIssuer homelab-ca, used by every Certificate.
+- name: Add helm repo for cert manager
+  kubernetes.core.helm_repository:
+    binary_path: "{{ helm_binary }}"
+    name: jetstack
+    force_update: true
+    repo_url: "{{ cert_manager_chart_url }}"
+    state: present
+
+- name: Install helm chart for cert manager
+  kubernetes.core.helm:
+    binary_path: "{{ helm_binary }}"
+    name: cert-manager
+    release_namespace: cert-manager
+    create_namespace: true
+    update_repo_cache: true
+    chart_ref: jetstack/cert-manager
+    chart_version: "{{ cert_manager_chart_version }}"
+    state: present
+    values:
+      crds:
+        # Replaces the deprecated `installCRDs: true`. Both gate the same
+        # templates (`if or .Values.crds.enabled .Values.installCRDs`), so this
+        # is a rename, not a behaviour change.
+        enabled: true
+        # Default is already true; set explicitly because this is the annotation
+        # (`helm.sh/resource-policy: keep`) that stops a `helm uninstall` from
+        # cascade-deleting every Certificate and ClusterIssuer in the cluster.
+        # It is gated on `crds.keep` alone, independent of the flag above.
+        keep: true
+
+- name: Gather information about cert-manager installation
+  kubernetes.core.helm_info:
+    binary_path: "{{ helm_binary }}"
+    name: cert-manager
+    release_namespace: cert-manager
+
+- name: Set up self-signed bootstrap issuer
+  kubernetes.core.k8s:
+    apply: true
+    server_side_apply:
+      field_manager: ansible
+      force_conflicts: true
+    state: present
+    definition: "{{ lookup('template', '00-selfsigned-bootstrap-issuer.yaml.j2') | from_yaml_all | list }}"
+
+- name: Set up homelab root CA certificate
+  kubernetes.core.k8s:
+    apply: true
+    server_side_apply:
+      field_manager: ansible
+      force_conflicts: true
+    state: present
+    definition: "{{ lookup('template', '01-homelab-root-ca-certificate.yaml.j2') | from_yaml_all | list }}"
+
+- name: Wait for root CA certificate to be ready
+  kubernetes.core.k8s_info:
+    api_version: cert-manager.io/v1
+    kind: Certificate
+    name: homelab-root-ca
+    namespace: cert-manager
+    wait: true
+    wait_condition:
+      type: Ready
+      status: "True"
+    wait_timeout: 120
+
+- name: Set up homelab CA cluster issuer
+  kubernetes.core.k8s:
+    apply: true
+    server_side_apply:
+      field_manager: ansible
+      force_conflicts: true
+    state: present
+    definition: "{{ lookup('template', '02-homelab-ca-cluster-issuer.yaml.j2') | from_yaml_all | list }}"

@@ -1,0 +1,7 @@
+---
+argument_specs:
+  main:
+    short_description: Prometheus Pushgateway in namespace monitoring, with its ServiceMonitor
+    description:
+      - Deploys the Prometheus Pushgateway (Deployment, ClusterIP Service on 9091, ServiceMonitor) in namespace C(monitoring).
+    options: {}

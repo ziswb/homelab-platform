@@ -1,0 +1,3 @@
+---
+dependencies:
+  - role: ziswb.homelab_platform.helm_preflight

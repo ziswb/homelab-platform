@@ -1,0 +1,22 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    app.kubernetes.io/name: traefik
+    # The site's Prometheus CR selects ServiceMonitors on this label.
+    name: traefik
+  name: traefik
+  namespace: monitoring
+spec:
+  endpoints:
+    - port: metrics
+  jobLabel: app.kubernetes.io/name
+  namespaceSelector:
+    matchNames:
+      - traefik
+  # The chart ships two Services sharing app.kubernetes.io/name; component tells the
+  # metrics one apart from the LoadBalancer.
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: traefik
+      app.kubernetes.io/component: metrics

@@ -1,0 +1,15 @@
+---
+- name: Apply kube state metrics resources
+  kubernetes.core.k8s:
+    apply: true
+    server_side_apply:
+      field_manager: ansible
+      force_conflicts: true
+    definition: "{{ lookup('template', item) | from_yaml_all | list }}"
+  loop:
+    - kube-state-metrics-clusterRole.yaml.j2
+    - kube-state-metrics-clusterRoleBinding.yaml.j2
+    - kube-state-metrics-deployment.yaml.j2
+    - kube-state-metrics-service.yaml.j2
+    - kube-state-metrics-serviceAccount.yaml.j2
+    - kube-state-metrics-serviceMonitor.yaml.j2
