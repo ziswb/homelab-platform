@@ -6,7 +6,7 @@ roles and playbooks: k3s on small Ubuntu nodes, a central host running services
 as Podman Quadlets, CloudNativePG for databases, a private CA with cert-manager,
 Traefik and MetalLB for ingress, Prometheus Operator, Loki and Alloy for
 monitoring. It is opinionated, not a general-purpose library; the decisions
-behind it are documented as ADRs.
+behind it are documented as [ADRs](docs/adr/).
 
 > **Status:** pre-1.0, no roles yet. The roles move in from a private
 > infrastructure repository; v1.0.0 is the first usable release.

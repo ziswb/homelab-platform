@@ -74,3 +74,7 @@ comment, test-image bases by digest; Dependabot bumps all three weekly.
   family); arm64 + amd64; k3s only. No Raspberry Pi assumptions.
 - `docs/variables.md` lists the platform variables (`homelab_*`) and
   `docs/bring-up.md` the playbook order; update both when a role moves in.
+- Decisions are in `docs/adr/` (check them before introducing a new pattern). An
+  infrastructure ADR moves here iff it constrains a public role or the architecture,
+  with an "Originally: infrastructure ADR-NNNN" line, site details removed, decision
+  unchanged; the infrastructure copy is marked moved and frozen.
