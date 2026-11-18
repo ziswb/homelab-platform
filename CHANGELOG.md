@@ -6,6 +6,21 @@ release. Each release is a git tag `vX.Y.Z`.
 
 ## Unreleased
 
+## 1.0.0
+
+The first complete release: the 21 roles of the reference platform's
+v1.0.0 scope, each with argument specs, a README and (except the meta
+dependencies `helm_preflight` and `central_podman`) a playbook. From here on
+the argument specs, the inventory groups `server`, `agent`, `central_server`
+and the platform variables in `docs/variables.md` are the SemVer contract.
+
+- No role changes since 0.4.1.
+- README and `docs/bring-up.md`: what 1.0 covers and what is still the site's
+  own until 1.1.0 (MetalLB, the Traefik install, trusting the private root CA
+  on the nodes).
+- Known gap (docs/BACKLOG.md 4): `update_ubuntu` has no Molecule scenario; it
+  needs a cluster for everything after the package upgrade.
+
 ## 0.4.1
 
 - Fixed: `central_podman` pinned netavark's firewall driver to `iptables`,

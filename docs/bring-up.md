@@ -4,13 +4,11 @@ The order in which a new site applies the collection's playbooks. Each step
 depends on the ones before it. The playbooks are `ziswb.homelab_platform.<name>`
 and run standalone; `k3s_cluster` bundles the k3s install.
 
-> **Status:** the playbooks arrive with their roles until v1.0.0. Available
-> since 0.2.0: `central_loki`, `central_os_updates`; since 0.3.0:
-> `cert_manager`, `cnpg_operator`, `prometheus_operator`, `kube_state_metrics`,
-> `pushgateway`, `node_exporter`, `kubelet`, `traefik_service_monitor`, `alloy`;
-> since 0.4.0: `k3s_cluster` (and its parts `prereq`, `k3s_server`,
-> `k3s_agent`, `k3s_upgrader`, `k3s_node_taints`),
-> `k3s_etcd_snapshot_offload`, `ssh_access`, `update_ubuntu`.
+> **Not in the collection yet** (planned for 1.1.0): MetalLB, the Traefik
+> install and trusting the private root CA on the nodes. Until then they are
+> the site's own: the CA trust in step 0, MetalLB and Traefik after
+> `cert_manager` in step 3 (`traefik_service_monitor` expects Traefik's metrics
+> Service).
 
 ## 0. Before: your site's own preparation
 
