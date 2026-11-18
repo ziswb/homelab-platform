@@ -1,0 +1,23 @@
+---
+# Cluster monitoring in the order a fresh cluster needs (docs/bring-up.md,
+# step 3.5): the Prometheus operator first, because the others create
+# ServiceMonitor objects and fail without its CRDs; then the exporters and
+# ServiceMonitors. Runs on localhost against the cluster in the current
+# kubeconfig context. Prometheus and Alertmanager instances are the site's own.
+- name: The Prometheus operator
+  ansible.builtin.import_playbook: ziswb.homelab_platform.prometheus_operator
+
+- name: The node-exporter DaemonSet
+  ansible.builtin.import_playbook: ziswb.homelab_platform.node_exporter
+
+- name: The kube-state-metrics exporter
+  ansible.builtin.import_playbook: ziswb.homelab_platform.kube_state_metrics
+
+- name: The kubelet ServiceMonitor
+  ansible.builtin.import_playbook: ziswb.homelab_platform.kubelet
+
+- name: The Traefik ServiceMonitor
+  ansible.builtin.import_playbook: ziswb.homelab_platform.traefik_service_monitor
+
+- name: The Prometheus Pushgateway
+  ansible.builtin.import_playbook: ziswb.homelab_platform.pushgateway

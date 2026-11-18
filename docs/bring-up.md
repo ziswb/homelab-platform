@@ -2,7 +2,8 @@
 
 The order in which a new site applies the collection's playbooks. Each step
 depends on the ones before it. The playbooks are `ziswb.homelab_platform.<name>`
-and run standalone; `k3s_cluster` bundles the k3s install.
+and run standalone; `k3s_cluster` bundles the k3s install and `monitoring`
+the monitoring roles.
 
 ## 0. Before k3s: node preparation
 
@@ -46,9 +47,10 @@ first.
    `--disable servicelb`).
 4. `traefik_install`: the ingress (k3s runs with `--disable traefik`); needs
    the issuer and MetalLB.
-5. Monitoring: `prometheus_operator` first (the ServiceMonitor CRD the others
-   create objects of), then `node_exporter`, `kube_state_metrics`, `kubelet`,
-   `traefik_service_monitor`, `pushgateway`. Your Prometheus and Alertmanager
+5. `monitoring`: `prometheus_operator` first (the ServiceMonitor CRD the
+   others create objects of), then `node_exporter`, `kube_state_metrics`,
+   `kubelet`, `traefik_service_monitor`, `pushgateway`. Run standalone, the
+   component playbooks need the same order. Your Prometheus and Alertmanager
    instances come after. (Helm prerequisites are checked by `helm_preflight`,
    a dependency of the Helm-based roles.)
 6. `cnpg_operator`: the CloudNativePG operator (database clusters are your own).
