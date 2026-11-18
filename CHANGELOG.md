@@ -6,6 +6,19 @@ release. Each release is a git tag `vX.Y.Z`.
 
 ## Unreleased
 
+## 0.4.1
+
+- Fixed: `central_podman` pinned netavark's firewall driver to `iptables`,
+  which netavark 2.0 removed. After the netavark 2 upgrade (Rocky Linux 10.3),
+  every Quadlet with a published port (`central_loki`, a site's PostgreSQL)
+  failed to start at the next reboot with "Must provide a valid firewall
+  backend, got iptables". The pin is now `nftables` (ADR-0008 amended). Apply
+  this release to a central host before it reboots onto netavark 2; a host
+  already on netavark 2 with `iptables` set fails on its next container start.
+- Molecule `central_podman` now sets up a container with a published port
+  (`podman init`), which fails with the old pin on the test image's netavark
+  2.1.0.
+
 ## 0.4.0
 
 Third batch: the k3s nodes.

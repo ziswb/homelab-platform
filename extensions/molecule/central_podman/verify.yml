@@ -13,8 +13,28 @@
         src: /etc/containers/containers.conf.d/50-firewall-driver.conf
       register: central_podman_driver_conf
 
-    - name: Expect the iptables driver
+    - name: Expect the nftables driver
       ansible.builtin.assert:
         that:
-          - "'firewall_driver = \"iptables\"' in (central_podman_driver_conf.content | b64decode)"
+          - "'firewall_driver = \"nftables\"' in (central_podman_driver_conf.content | b64decode)"
           - central_podman_version.stdout is search('podman version')
+
+    # What broke on netavark 2 with the old iptables pin: a container with a
+    # published port fails at start ("Must provide a valid firewall backend").
+    # `podman init` sets up the container's network, bridge and port
+    # forwarding rules included, through the pinned driver, without running
+    # anything; so the root file system is an empty directory with an empty
+    # executable, and no image is pulled. vfs: overlay storage does not work
+    # inside the test container.
+    - name: Create a container with a published port and set up its network
+      ansible.builtin.shell:
+        cmd: |
+          set -e
+          mkdir -p /tmp/central-podman-rootfs
+          install -m 0755 /dev/null /tmp/central-podman-rootfs/noop
+          podman --storage-driver vfs create --name central-podman-verify --network bridge \
+            --publish 18080:8080 --rootfs /tmp/central-podman-rootfs /noop
+          trap 'podman --storage-driver vfs rm -f central-podman-verify' EXIT
+          podman --storage-driver vfs init central-podman-verify
+        executable: /bin/bash
+      changed_when: false

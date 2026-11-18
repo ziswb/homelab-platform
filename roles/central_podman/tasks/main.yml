@@ -15,12 +15,12 @@
     state: present
   become: true
 
-# Netavark's firewall driver is pinned rather than left at the Rocky 10 default
-# (nftables). It started as a Docker-coexistence measure (one shared ruleset for
-# both stacks) and is kept because this is the ruleset the reference host's
-# published ports have been verified against; firewalld is inactive there, so
-# nothing else arbitrates the chains. Changing it is a deliberate, reboot-verified
-# step, not a cleanup side effect (ADR-0008).
+# Netavark's firewall driver is pinned to nftables (ADR-0008, amended 0.4.1).
+# Netavark 2.0 removed the iptables driver: with the old iptables pin, every
+# Quadlet that publishes a port failed to start after the upgrade. Pinned rather
+# than left at the default so that a later default change does not alter the
+# ruleset unnoticed; firewalld is inactive on the reference host, so netavark's
+# table is the only ruleset.
 # A fresh Rocky 10 install of podman does not create the drop-in directory.
 - name: Ensure the containers.conf drop-in directory exists
   ansible.builtin.file:
@@ -31,11 +31,11 @@
     mode: '0755'
   become: true
 
-- name: Configure netavark to use the iptables firewall driver
+- name: Configure netavark to use the nftables firewall driver
   ansible.builtin.copy:
     content: |
       [network]
-      firewall_driver = "iptables"
+      firewall_driver = "nftables"
     dest: /etc/containers/containers.conf.d/50-firewall-driver.conf
     owner: root
     group: root
