@@ -1,0 +1,15 @@
+# {{ ansible_managed }}
+[Unit]
+Description=Copy k3s etcd snapshots to the central server (ADR-0018)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/k3s-etcd-snapshot-offload
+# etcd on this node competes for the same SD card, and slow fsyncs are what
+# cost it its leader on 2026-10-15. The copy waits for idle I/O.
+IOSchedulingClass=idle
+Nice=10
+# A hung run must not block the next one forever (soft mount aside).
+TimeoutStartSec=15min

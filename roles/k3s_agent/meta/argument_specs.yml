@@ -1,0 +1,68 @@
+---
+argument_specs:
+  main:
+    short_description: k3s agent joined through the API endpoint
+    description:
+      - Trimmed copy of k3s-ansible's agent role (deviations in C(roles/k3s_server/README.md)).
+      - >-
+        Runs the k3s install script on every run (so the unit's C(--server) follows C(api_endpoint)), puts
+        the token in C(k3s-agent.service.env) and restarts the agent only when its config, unit or binary
+        changed.
+    options:
+      token:
+        type: str
+        required: true
+        no_log: true
+        description:
+          - The cluster token (secret). Resolve it in the inventory.
+      api_endpoint:
+        type: str
+        required: true
+        description:
+          - Address of the Kubernetes API the agent joins through.
+      k3s_version:
+        type: str
+        required: true
+        description:
+          - k3s version the install script installs on a new node.
+      api_port:
+        type: int
+        default: 6443
+        description:
+          - Port of the Kubernetes API.
+      agent_config_yaml:
+        type: str
+        required: false
+        description:
+          - k3s agent config as YAML text, written to C(/etc/rancher/k3s/config.yaml).
+      extra_agent_args:
+        type: str
+        default: ""
+        description:
+          - Extra arguments for the k3s agent unit.
+      extra_install_envs:
+        type: dict
+        default: {}
+        description:
+          - Extra environment for the k3s install script; the role's own C(INSTALL_K3S_*) keys win.
+      extra_service_envs:
+        type: list
+        elements: str
+        required: false
+        description:
+          - Lines added to C(k3s-agent.service.env).
+      systemd_dir:
+        type: str
+        default: /etc/systemd/system
+        description:
+          - Where the install script writes the unit.
+      server_group:
+        type: str
+        default: server
+        description:
+          - Inventory group of the k3s servers (kept from k3s-ansible).
+      k3s_server_location:
+        type: str
+        default: /var/lib/rancher/k3s
+        description:
+          - k3s data directory (kept from k3s-ansible).

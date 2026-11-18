@@ -7,7 +7,10 @@ and run standalone; `k3s_cluster` bundles the k3s install.
 > **Status:** the playbooks arrive with their roles until v1.0.0. Available
 > since 0.2.0: `central_loki`, `central_os_updates`; since 0.3.0:
 > `cert_manager`, `cnpg_operator`, `prometheus_operator`, `kube_state_metrics`,
-> `pushgateway`, `node_exporter`, `kubelet`, `traefik_service_monitor`, `alloy`.
+> `pushgateway`, `node_exporter`, `kubelet`, `traefik_service_monitor`, `alloy`;
+> since 0.4.0: `k3s_cluster` (and its parts `prereq`, `k3s_server`,
+> `k3s_agent`, `k3s_upgrader`, `k3s_node_taints`),
+> `k3s_etcd_snapshot_offload`, `ssh_access`, `update_ubuntu`.
 
 ## 0. Before: your site's own preparation
 
@@ -25,7 +28,8 @@ first.
 1. `central_loki`: Loki as a Podman Quadlet (installs Podman through the
    `central_podman` dependency).
 2. `central_os_updates`: automatic package updates, no reboots.
-3. `ssh_access`: authorized keys, no password or root login.
+3. `ssh_access` (`--limit central_server`): authorized keys, no password or
+   root login.
 
 ## 2. k3s cluster (`server`, `agent`)
 
@@ -40,7 +44,8 @@ first.
 
 ## 3. Cluster services
 
-1. `k3s_etcd_snapshot_offload`: etcd snapshots to the central host.
+1. `k3s_etcd_snapshot_offload`: etcd snapshots to the central host (needs
+   the site's NFS export there).
 2. `cert_manager`.
 3. Monitoring: `prometheus_operator` first (the ServiceMonitor CRD the others
    create objects of), then `node_exporter`, `kube_state_metrics`, `kubelet`,
@@ -49,7 +54,7 @@ first.
    a dependency of the Helm-based roles.)
 4. `cnpg_operator`: the CloudNativePG operator (database clusters are your own).
 5. `alloy`: log shipping to `central_loki`.
-6. `ssh_access` on the nodes.
+6. `ssh_access` on the nodes (`--limit server:agent`).
 
 ## Maintenance (not part of bring-up)
 

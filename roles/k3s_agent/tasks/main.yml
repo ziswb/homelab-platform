@@ -1,0 +1,132 @@
+---
+# Synced with k3s-ansible 5f06791 (2026-10-08), trimmed to the platform (Ubuntu,
+# systemd, token from the inventory). Deviations from upstream are in
+# roles/k3s_server/README.md.
+
+- name: Get k3s installed version
+  ansible.builtin.command: k3s --version
+  register: k3s_agent_version_output
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Set k3s installed version
+  when: k3s_agent_version_output.rc == 0
+  ansible.builtin.set_fact:
+    k3s_agent_installed_version: "{{ k3s_agent_version_output.stdout_lines[0].split(' ')[2] }}"
+
+- name: Download the install script only if a new binary is needed
+  when:
+    - not ansible_check_mode
+    - k3s_agent_version_output.rc != 0 or k3s_agent_installed_version is version(k3s_version, '<')
+  block:
+    - name: Download K3s install script
+      ansible.builtin.get_url:
+        url: https://get.k3s.io/
+        timeout: 120
+        dest: /usr/local/bin/k3s-install.sh
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Set skip_download var for install script
+      # noqa var-naming[no-role-prefix]
+      ansible.builtin.set_fact:
+        skip_download: "false"
+
+# The install script rewrites k3s-agent.service and empties its env file on
+# every run, so compare both before and after to know whether to restart.
+- name: Checksum the unit and env file before the install script
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  loop:
+    - "{{ systemd_dir }}/k3s-agent.service"
+    - "{{ systemd_dir }}/k3s-agent.service.env"
+  register: k3s_agent_unit_before
+
+# Always run (with the existing binary unless a new one is needed): it keeps
+# the unit's --server in line with api_endpoint. Upstream runs it only on a
+# download, so an agent can keep a stale --server for months.
+- name: Run K3s install script
+  when: not ansible_check_mode
+  ansible.builtin.command:
+    cmd: /usr/local/bin/k3s-install.sh
+  environment: "{{ _install_envs }}"
+  vars:
+    _base_envs:
+      INSTALL_K3S_SKIP_DOWNLOAD: "{{ skip_download | default('true') }}"
+      INSTALL_K3S_SKIP_START: "true"
+      INSTALL_K3S_SYSTEMD_DIR: "{{ systemd_dir }}"
+      INSTALL_K3S_VERSION: "{{ k3s_version }}"
+      INSTALL_K3S_EXEC: "agent --server https://{{ api_endpoint }}:{{ api_port }} {{ extra_agent_args }}"
+    # We override the extra_install_envs with required keys from _base_envs on purpose
+    _install_envs: "{{ extra_install_envs | default({}) | combine(_base_envs) }}"
+  changed_when: false
+
+- name: Setup optional config file
+  when: agent_config_yaml is defined
+  block:
+    - name: Make config directory
+      ansible.builtin.file:
+        path: "/etc/rancher/k3s"
+        mode: "0755"
+        state: directory
+    - name: Copy config values
+      ansible.builtin.copy:
+        content: "{{ agent_config_yaml }}"
+        dest: "/etc/rancher/k3s/config.yaml"
+        mode: "0644"
+      register: k3s_agent_config_result
+
+- name: Add service environment variables
+  when: extra_service_envs is defined
+  ansible.builtin.lineinfile:
+    path: "{{ systemd_dir }}/k3s-agent.service.env"
+    line: "{{ item }}"
+  loop: "{{ extra_service_envs }}"
+
+- name: Add the token for joining the cluster to the environment
+  no_log: true # avoid logging the server token
+  ansible.builtin.lineinfile:
+    path: "{{ systemd_dir }}/k3s-agent.service.env"
+    regexp: "^K3S_TOKEN="
+    line: "K3S_TOKEN={{ token }}"
+    mode: "0600"
+
+- name: Checksum the unit and env file after the install script
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  loop:
+    - "{{ systemd_dir }}/k3s-agent.service"
+    - "{{ systemd_dir }}/k3s-agent.service.env"
+  register: k3s_agent_unit_after
+
+- name: Populate service facts
+  ansible.builtin.service_facts:
+
+# Restart only when something changed (local deviation: upstream restarts on
+# every run). Restarting k3s-agent leaves the running pods alone.
+- name: Restart K3s agent when its config, unit or binary changed
+  when:
+    - not ansible_check_mode
+    - ansible_facts.services['k3s-agent.service'] is defined
+    - ansible_facts.services['k3s-agent.service'].state == 'running'
+    - >-
+      (k3s_agent_config_result.changed | default(false))
+      or skip_download | default('true') == 'false'
+      or (k3s_agent_unit_before.results | map(attribute='stat.checksum', default='')
+          | list) != (k3s_agent_unit_after.results | map(attribute='stat.checksum', default='') | list)
+  ansible.builtin.systemd:
+    name: k3s-agent
+    daemon_reload: true
+    state: restarted
+
+- name: Enable and start K3s agent
+  when:
+    - not ansible_check_mode
+    - ansible_facts.services['k3s-agent.service'] is not defined or ansible_facts.services['k3s-agent.service'].state != 'running'
+  ansible.builtin.systemd:
+    name: k3s-agent
+    daemon_reload: true
+    state: started
+    enabled: true

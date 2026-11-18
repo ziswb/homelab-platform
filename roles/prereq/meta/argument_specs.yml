@@ -1,0 +1,39 @@
+---
+argument_specs:
+  main:
+    short_description: Prepares an Ubuntu node for k3s
+    description:
+      - >-
+        Trimmed from k3s-ansible (see C(roles/k3s_server/README.md)). Asserts Ubuntu, installs
+        C(policycoreutils), enables IPv4 (and IPv6, when the host has IPv6 addresses) forwarding.
+      - >-
+        While UFW is active, opens the k3s ports (API, etcd on servers, Spegel, Flannel, kubelet) and allows
+        the cluster and service CIDRs. Inactive UFW is left alone.
+    options:
+      api_port:
+        type: int
+        default: 6443
+        description:
+          - Port of the Kubernetes API, opened in UFW.
+      server_group:
+        type: str
+        default: server
+        description:
+          - Inventory group of the k3s servers; the etcd ports are opened when it has more than one host.
+      agent_group:
+        type: str
+        default: agent
+        description:
+          - Inventory group of the k3s agents (kept from k3s-ansible).
+      manage_firewall:
+        type: bool
+        default: true
+        description:
+          - Open the k3s ports in UFW when UFW is active.
+      server_config_yaml:
+        type: str
+        required: false
+        description:
+          - >-
+            The servers' extra k3s config (YAML text, see C(k3s_server)). Its C(cluster-cidr) and
+            C(service-cidr) (defaults C(10.42.0.0/16), C(10.43.0.0/16)) are allowed in UFW.

@@ -1,0 +1,109 @@
+---
+argument_specs:
+  main:
+    short_description: k3s server with embedded etcd, joined through an API endpoint
+    description:
+      - Trimmed copy of k3s-ansible's server role (README.md lists what was left out and the deviations).
+      - >-
+        Writes C(/etc/rancher/k3s/config.yaml) (token, join URL, C(tls-san) with C(api_endpoint), plus
+        C(server_config_yaml)), runs the k3s install script and restarts k3s only when its config, unit or
+        binary changed.
+      - Run it with C(serial 1); each server waits until it has joined and is an etcd voter.
+      - >-
+        Fetches the kubeconfig from the first server to the control node after checking it against the API,
+        and merges it into C(~/.kube/config) as context C(cluster_context).
+    options:
+      token:
+        type: str
+        required: true
+        no_log: true
+        description:
+          - The cluster token (secret). Resolve it in the inventory.
+      api_endpoint:
+        type: str
+        required: true
+        description:
+          - Address of the Kubernetes API that servers and agents join through (a load balancer in front of the servers). Always added to C(tls-san).
+      k3s_version:
+        type: str
+        required: true
+        description:
+          - k3s version the install script installs on a new node, e.g. C(v1.33.5+k3s1). Upgrades are C(k3s_upgrader)'s job; keep this at what the cluster runs.
+      api_port:
+        type: int
+        default: 6443
+        description:
+          - Port of the Kubernetes API.
+      server_config_yaml:
+        type: str
+        required: false
+        description:
+          - >-
+            Extra k3s server config as YAML text, merged into C(config.yaml) (see the k3s configuration file
+            docs). A C(tls-san) here is merged as a list with C(api_endpoint).
+      extra_server_args:
+        type: str
+        default: ""
+        description:
+          - Extra arguments for the k3s server unit (C(INSTALL_K3S_EXEC)), e.g. C(--disable traefik).
+      extra_install_envs:
+        type: dict
+        default: {}
+        description:
+          - Extra environment for the k3s install script; the role's own C(INSTALL_K3S_*) keys win.
+      extra_service_envs:
+        type: list
+        elements: str
+        required: false
+        description:
+          - Lines added to C(k3s.service.env).
+      k3s_server_bootstrap_host:
+        type: str
+        default: ""
+        description:
+          - >-
+            Inventory host name of the server that starts a new cluster (cluster-init). Set it only to build a
+            cluster from nothing; the role refuses it when any server has etcd data or the host is not the first
+            of the play.
+      k3s_server_location:
+        type: str
+        default: /var/lib/rancher/k3s
+        description:
+          - k3s data directory, where the role looks for existing etcd data.
+      k3s_server_config_mode:
+        type: str
+        default: "0600"
+        description:
+          - Mode of C(/etc/rancher/k3s/config.yaml) (it holds the token).
+      systemd_dir:
+        type: str
+        default: /etc/systemd/system
+        description:
+          - Where the install script writes the unit.
+      kubeconfig:
+        type: str
+        default: ~/.kube/config.new
+        description:
+          - >-
+            Where the fetched kubeconfig lands on the control node. With the default it is merged into
+            C(~/.kube/config) (backup in C(~/.kube/config.bak-ansible)).
+      user_kubectl:
+        type: bool
+        default: true
+        description:
+          - Copy the kubeconfig to C(ansible_user)'s C(~/.kube/config) on each server.
+      cluster_context:
+        type: str
+        default: k3s-ansible
+        description:
+          - Name of the context, cluster and user merged into C(~/.kube/config).
+      server_group:
+        type: str
+        default: server
+        description:
+          - Inventory group of the k3s servers.
+      agent_group:
+        type: str
+        default: agent
+        description:
+          - Inventory group of the k3s agents (kept from k3s-ansible).

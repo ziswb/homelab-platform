@@ -1,0 +1,92 @@
+---
+# Synced with k3s-ansible 5f06791 (2026-10-08), trimmed to Ubuntu: the RHEL,
+# Oracle, SUSE, Debian and Arch branches, firewalld, nftables and airgap are gone
+# (see roles/k3s_server/README.md).
+
+- name: Enforce minimum Ansible version
+  ansible.builtin.assert:
+    that:
+      - ansible_version.full is version('2.15', '>=')
+    msg: "Minimum ansible-core version required is 2.15"
+
+- name: Require Ubuntu
+  ansible.builtin.assert:
+    that: ansible_facts['distribution'] == 'Ubuntu'
+    fail_msg: "This trimmed copy of k3s-ansible supports Ubuntu only, not {{ ansible_facts['distribution'] }}."
+    quiet: true
+
+- name: Install Dependent Ubuntu Packages
+  ansible.builtin.apt:
+    name: policycoreutils  # Used by install script to restore SELinux context
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Enable IPv4 forwarding
+  ansible.posix.sysctl:
+    name: net.ipv4.ip_forward
+    value: "1"
+    state: present
+    reload: true
+
+- name: Enable IPv6 forwarding
+  ansible.posix.sysctl:
+    name: net.ipv6.conf.all.forwarding
+    value: "1"
+    state: present
+    reload: true
+  when: ansible_facts['all_ipv6_addresses'] | length > 0
+
+- name: Populate service facts
+  ansible.builtin.service_facts:
+
+- name: Allow UFW Exceptions
+  when:
+    - manage_firewall
+    - ansible_facts.services['ufw'] is defined
+    - ansible_facts.services['ufw'].state == 'running'
+  block:
+    - name: Get ufw status
+      ansible.builtin.command:
+        cmd: ufw status
+      changed_when: false
+      check_mode: false
+      register: prereq_ufw_status
+
+    - name: If ufw enabled, open api port
+      when:
+        - "'Status: active' in prereq_ufw_status['stdout']"
+      community.general.ufw:
+        rule: allow
+        port: "{{ api_port }}"
+        proto: tcp
+
+    - name: If ufw enabled, open etcd ports
+      when:
+        - "'Status: active' in prereq_ufw_status['stdout']"
+        - groups[server_group] | length > 1
+      community.general.ufw:
+        rule: allow
+        port: "2379:2381"
+        proto: tcp
+
+    - name: If ufw enabled, open inter-node ports
+      when:
+        - "'Status: active' in prereq_ufw_status['stdout']"
+      community.general.ufw:
+        rule: allow
+        port: "{{ item.port }}"
+        proto: "{{ item.proto }}"
+      loop:
+        - { port: "5001", proto: "tcp" }    # Spegel (Embedded distributed registry)
+        - { port: "8472", proto: "udp" }    # Flannel VXLAN
+        - { port: "10250", proto: "tcp" }   # Kubelet metrics
+        - { port: "51820", proto: "udp" }   # Flannel Wireguard (IPv4)
+        - { port: "51821", proto: "udp" }   # Flannel Wireguard (IPv6)
+
+    - name: If ufw enabled, allow default CIDRs
+      when:
+        - "'Status: active' in prereq_ufw_status['stdout']"
+      community.general.ufw:
+        rule: allow
+        src: '{{ item }}'
+      loop: "{{ (cluster_cidr + ',' + service_cidr) | split(',') }}"

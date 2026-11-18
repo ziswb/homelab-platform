@@ -1,0 +1,50 @@
+---
+argument_specs:
+  main:
+    short_description: Copies each server's etcd snapshots to an NFS export on the central host
+    description:
+      - >-
+        ADR-0009. A systemd timer on each server, half an hour after each k3s snapshot, mounts the export
+        for the run only, copies new snapshots with C(rsync --ignore-existing), prunes this node's scheduled
+        snapshots older than the retention there, and unmounts. k3s is not touched.
+    options:
+      homelab_nfs_server:
+        type: str
+        required: true
+        description:
+          - Address of the NFS server (the central host).
+      homelab_nfs_paths:
+        type: dict
+        required: true
+        description:
+          - Exported paths by purpose; this role reads C(etcd_snapshots).
+      k3s_etcd_snapshot_offload_nfs_server:
+        type: str
+        default: "{{ homelab_nfs_server }}"
+        description:
+          - NFS server for the snapshots.
+      k3s_etcd_snapshot_offload_nfs_path:
+        type: str
+        default: "{{ homelab_nfs_paths.etcd_snapshots }}"
+        description:
+          - Exported directory for the snapshots.
+      k3s_etcd_snapshot_offload_source:
+        type: str
+        default: /var/lib/rancher/k3s/server/db/snapshots
+        description:
+          - Where k3s writes the snapshots.
+      k3s_etcd_snapshot_offload_mount:
+        type: str
+        default: /run/etcd-snapshot-offload
+        description:
+          - Mount point for the run.
+      k3s_etcd_snapshot_offload_on_calendar:
+        type: str
+        default: "*-*-* 00,12:30:00"
+        description:
+          - Timer schedule (systemd C(OnCalendar)); half an hour after k3s' default snapshots.
+      k3s_etcd_snapshot_offload_retention_days:
+        type: int
+        default: 14
+        description:
+          - Age in days after which this node's scheduled snapshots are pruned on the export.

@@ -1,0 +1,75 @@
+---
+# The cluster must be healthy before the next node is touched, and after the
+# last one. Each check retries for up to 5 minutes, then the play stops.
+#
+# Why: on the reference site, the package upgrade of one server slowed etcd on
+# all three; k3s exited on that server twice within minutes, then on the other
+# two (no etcd leader for ~30 s). The play only waited for Node Ready, which
+# lags by ~40 s, and went on to the next server meanwhile.
+
+- name: Wait until k3s and etcd are healthy on every server
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      # running, and for at least the settle time: k3s has come back on a
+      # server and exited again 4 minutes later
+      systemctl is-active --quiet k3s
+      since=$(systemctl show k3s -p ActiveEnterTimestamp --value)
+      test $(( $(date +%s) - $(date -d "$since" +%s) )) -ge {{ update_ubuntu_k3s_settle_seconds }}
+      # this server's own API reaches etcd
+      k3s kubectl get --raw /readyz/etcd >/dev/null
+      # etcd not slow: a healthy server logs ~0 of these a minute
+      slow=$(journalctl -u k3s --since "-60s" --no-pager -o cat | grep -cE 'took too long|deadline exceeded' || true)
+      test "$slow" -le {{ update_ubuntu_etcd_slow_warnings_max }}
+    executable: /bin/bash
+  delegate_to: "{{ item }}"
+  become: true
+  loop: "{{ groups['server'] }}"
+  register: _update_ubuntu_gate_servers
+  until: _update_ubuntu_gate_servers.rc == 0
+  retries: 30
+  delay: 10
+  changed_when: false
+  check_mode: false   # read-only, and the play depends on it
+  vars:
+    ansible_connection: ssh
+
+- name: Wait until every node is Ready
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Node
+  register: _update_ubuntu_gate_nodes
+  until: >-
+    _update_ubuntu_gate_nodes.resources | length > 0
+    and _update_ubuntu_gate_nodes.resources
+        | map(attribute='status.conditions')
+        | map('selectattr', 'type', 'equalto', 'Ready')
+        | map('map', attribute='status') | map('first')
+        | reject('equalto', 'True') | list | length == 0
+  retries: 30
+  delay: 10
+
+- name: Look up the CloudNativePG instance pods
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Pod
+    label_selectors:
+      - cnpg.io/cluster
+  register: _update_ubuntu_gate_cnpg_pods
+
+# A replica that left with a drain comes back on its own node only (its storage
+# is local), and until it has caught up the `<cluster>` PDB allows no further
+# eviction.
+- name: Wait until every CloudNativePG cluster is healthy
+  kubernetes.core.k8s_info:
+    api_version: postgresql.cnpg.io/v1
+    kind: Cluster
+  register: _update_ubuntu_gate_cnpg
+  until: >-
+    _update_ubuntu_gate_cnpg.resources
+    | rejectattr('status.phase', 'defined') | list | length == 0
+    and _update_ubuntu_gate_cnpg.resources
+    | rejectattr('status.phase', 'equalto', 'Cluster in healthy state') | list | length == 0
+  retries: 30
+  delay: 10
+  when: _update_ubuntu_gate_cnpg_pods.resources | length > 0

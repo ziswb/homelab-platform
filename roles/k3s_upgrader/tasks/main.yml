@@ -1,0 +1,37 @@
+# https://docs.k3s.io/upgrades/automated
+---
+- name: Make sure k3s upgrade controller is set up
+  kubernetes.core.k8s:
+    apply: true
+    server_side_apply:
+      field_manager: ansible
+      force_conflicts: true
+    state: present
+    src: system-upgrade-controller.yaml
+
+- name: Make sure k3s upgrade CRDs are set up
+  kubernetes.core.k8s:
+    apply: true
+    server_side_apply:
+      field_manager: ansible
+      force_conflicts: true
+    state: present
+    src: crd.yaml
+
+- name: Make sure k3s control-nodes upgrade plan is set up
+  kubernetes.core.k8s:
+    apply: true
+    server_side_apply:
+      field_manager: ansible
+      force_conflicts: true
+    state: present
+    definition: "{{ lookup('template', 'control-node-plan.yaml.j2') | from_yaml_all | list }}"
+
+- name: Make sure k3s worker-nodes upgrade plan is set up
+  kubernetes.core.k8s:
+    apply: true
+    server_side_apply:
+      field_manager: ansible
+      force_conflicts: true
+    state: present
+    definition: "{{ lookup('template', 'worker-node-plan.yaml.j2') | from_yaml_all | list }}"

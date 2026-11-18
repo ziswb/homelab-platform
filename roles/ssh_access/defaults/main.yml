@@ -1,0 +1,8 @@
+---
+# Who may log in over SSH: ssh_access_user and ssh_access_authorized_keys are
+# required (site values, meta/argument_specs.yml).
+
+# A new login is tried from the control machine after each host. On failure
+# the host gets its previous authorized_keys and sshd drop-in back, and the
+# play stops before the next host (run the play with serial: 1).
+ssh_access_verify_login: true

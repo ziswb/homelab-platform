@@ -1,0 +1,13 @@
+---
+argument_specs:
+  main:
+    short_description: Taints on existing k3s nodes
+    description:
+      - Applies the listed taints through the API (k3s applies C(node-taint) from its config only when a node first registers). Never removes a taint.
+    options:
+      k3s_node_taints:
+        type: list
+        elements: dict
+        default: []
+        description:
+          - "Entries with C(node) (the Kubernetes node name) and C(taints) (list of C(key), optional C(value), C(effect))."

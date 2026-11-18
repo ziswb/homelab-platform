@@ -1,0 +1,12 @@
+# {{ ansible_managed }}
+[Unit]
+Description=Copy k3s etcd snapshots to the central server, after each k3s snapshot
+
+[Timer]
+OnCalendar={{ k3s_etcd_snapshot_offload_on_calendar }}
+# The three servers do not need to hit the NFS server in the same second.
+RandomizedDelaySec=10min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

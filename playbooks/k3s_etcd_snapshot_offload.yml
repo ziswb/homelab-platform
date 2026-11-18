@@ -1,0 +1,9 @@
+---
+# Copies the server nodes' etcd snapshots to the central host
+# (roles/k3s_etcd_snapshot_offload, ADR-0009). Needs the NFS export first.
+# Does not restart k3s.
+- name: Copy etcd snapshots to the central host
+  hosts: server
+  gather_facts: false
+  roles:
+    - role: ziswb.homelab_platform.k3s_etcd_snapshot_offload

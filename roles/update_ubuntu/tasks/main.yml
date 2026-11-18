@@ -1,0 +1,19 @@
+---
+# Update worker nodes one by one
+- name: Update worker nodes sequentially
+  ansible.builtin.include_tasks: update_single_node.yml
+  loop: "{{ groups['agent'] }}"
+  loop_control:
+    loop_var: target_node
+  when: groups['agent'] is defined
+
+# Update master nodes one by one after workers
+- name: Update master nodes sequentially
+  ansible.builtin.include_tasks: update_single_node.yml
+  loop: "{{ groups['server'] }}"
+  loop_control:
+    loop_var: target_node
+  when: groups['server'] is defined
+
+- name: Check the cluster is healthy after the last node
+  ansible.builtin.include_tasks: cluster_health_gate.yml

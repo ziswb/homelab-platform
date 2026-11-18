@@ -1,0 +1,24 @@
+---
+argument_specs:
+  main:
+    short_description: Package upgrades on the k3s nodes, one node at a time, behind a cluster health gate
+    description:
+      - Runs on the control node against the cluster API and reaches the nodes over SSH (C(delegate_to)). Agents first, then servers.
+      - >-
+        Before each node and after the last, waits until k3s has been running for the settle time and etcd
+        is healthy on every server, every node is Ready and every CloudNativePG cluster is healthy.
+      - >-
+        Upgrades packages in place; only when the node then needs a reboot it is cordoned, CloudNativePG
+        primaries are switched over to a replica elsewhere, the node is drained, rebooted and uncordoned.
+      - The inventory host names of the nodes must equal their Kubernetes C(InternalIP).
+    options:
+      update_ubuntu_k3s_settle_seconds:
+        type: int
+        default: 120
+        description:
+          - How long k3s must have been running on every server before the next node.
+      update_ubuntu_etcd_slow_warnings_max:
+        type: int
+        default: 1
+        description:
+          - etcd "took too long" / "deadline exceeded" lines a server may log in the last minute.

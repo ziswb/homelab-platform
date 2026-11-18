@@ -1,0 +1,12 @@
+---
+# Node taints the site owns. K3s applies `node-taint` from its config only when
+# a node first registers, so taints for existing nodes are set here. Each entry
+# is a node name and a list of taints, e.g.
+#   k3s_node_taints:
+#     - node: node-01
+#       taints:
+#         - key: example.com/slow-disk
+#           effect: PreferNoSchedule
+# `k8s_taint` with `state: present` never removes anything, so a dropped entry
+# must also be removed from the cluster by hand (`kubectl taint node <node> <key>-`).
+k3s_node_taints: []  # noqa var-naming[no-role-prefix] -- the role's name, kept (interface)

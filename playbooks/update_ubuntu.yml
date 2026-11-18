@@ -1,0 +1,10 @@
+---
+# Package upgrades on the k3s nodes, one at a time, rebooting only when needed
+# (roles/update_ubuntu). Runs on localhost against the cluster in the current
+# kubeconfig context and reaches the nodes over SSH.
+- name: Update the k3s nodes
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  roles:
+    - role: ziswb.homelab_platform.update_ubuntu

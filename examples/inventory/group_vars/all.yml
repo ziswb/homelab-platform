@@ -5,3 +5,19 @@
 homelab_domain: home.arpa
 # Where alloy pushes logs: central_loki on the central host, port 3100.
 homelab_loki_url: "http://loki.{{ homelab_domain }}:3100"
+# NFS on the central host. k3s_etcd_snapshot_offload reads etcd_snapshots.
+homelab_nfs_server: 192.0.2.2
+homelab_nfs_paths:
+  etcd_snapshots: /srv/nfs/etcd-snapshots
+
+# k3s (k3s_server, k3s_agent; k3s-ansible's names). `token` is a secret: set
+# it in your own inventory.
+k3s_version: v1.33.5+k3s1
+# A load balancer in front of the servers' API (port 6443).
+api_endpoint: 192.0.2.10
+extra_server_args: "--disable traefik --disable servicelb"
+
+# ssh_access: the login user and the complete list of its public keys.
+ssh_access_user: admin
+ssh_access_authorized_keys:
+  - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA-example-only admin@example.com"

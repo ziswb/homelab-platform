@@ -1,0 +1,8 @@
+---
+# SSH login by public key only (roles/ssh_access). One host at a time: a failed
+# fresh login rolls that host back and stops the play. Narrow it with --limit.
+- name: SSH access
+  hosts: server:agent:central_server
+  serial: 1
+  roles:
+    - role: ziswb.homelab_platform.ssh_access

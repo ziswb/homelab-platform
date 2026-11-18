@@ -1,0 +1,8 @@
+---
+# Prepares the k3s nodes (roles/prereq). First play of k3s_cluster.yml.
+- name: Prepare the k3s nodes
+  hosts: server:agent
+  gather_facts: true
+  become: true
+  roles:
+    - role: ziswb.homelab_platform.prereq

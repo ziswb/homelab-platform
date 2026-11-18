@@ -39,6 +39,22 @@ The names are fixed; the roles and playbooks refer to them.
 |---|---|---|---|---|
 | `homelab_domain` | str | yes | host name defaults | The site's DNS domain, e.g. `home.arpa` or `lab.example.com`. |
 | `homelab_loki_url` | str | yes | `alloy` | Base URL of Loki (`central_loki` listens on 3100), e.g. `http://loki.example.com:3100`. |
+| `homelab_nfs_server` | str | yes | `k3s_etcd_snapshot_offload` | Address of the NFS server on the central host. |
+| `homelab_nfs_paths` | dict | yes | `k3s_etcd_snapshot_offload` | Exported paths by purpose, e.g. `{etcd_snapshots: /srv/nfs/etcd-snapshots}`; each role names the keys it reads. |
+
+## k3s variables
+
+The k3s roles (`prereq`, `k3s_server`, `k3s_agent`) are a trimmed copy of
+[k3s-ansible](https://github.com/k3s-io/k3s-ansible) and keep its variable
+names, so an inventory written for it works here. The shared ones:
+
+| Variable | Type | Required | Used by | Meaning |
+|---|---|---|---|---|
+| `token` | str (secret) | yes | `k3s_server`, `k3s_agent` | The cluster token. |
+| `api_endpoint` | str | yes | `k3s_server`, `k3s_agent` | Address the nodes join through and the kubeconfig points to (a load balancer in front of the servers). |
+| `k3s_version` | str | yes | `k3s_server`, `k3s_agent` | k3s version a new node gets; upgrades are `k3s_upgrader`'s job. |
+| `api_port` | int | no (6443) | `prereq`, `k3s_server`, `k3s_agent` | Port of the Kubernetes API. |
+| `server_config_yaml` | str | no | `prereq`, `k3s_server` | Extra k3s server config (YAML text). |
 
 Rows are added with the roles that read them; each role move decides the
 public form of the variables it needs.

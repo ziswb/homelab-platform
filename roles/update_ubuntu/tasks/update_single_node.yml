@@ -1,0 +1,145 @@
+---
+# One node: upgrade in place, and drain + reboot only if the upgrade needs a
+# reboot. A plain upgrade does not touch running pods (containers bring their
+# own libraries; k3s and its containerd are not apt packages), and the nodes'
+# unattended-upgrades installs security fixes the same way every day. Draining
+# anyway moved every pod for nothing.
+
+- name: Check the cluster is healthy before touching {{ target_node }}
+  ansible.builtin.include_tasks: cluster_health_gate.yml
+
+- name: Look up Kubernetes node name for {{ target_node }}
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Node
+  register: _update_ubuntu_k8s_nodes
+
+- name: Resolve k8s node name from internal IP {{ target_node }}
+  ansible.builtin.set_fact:
+    update_ubuntu_k8s_node_name: >-
+      {{ (_update_ubuntu_k8s_nodes.resources
+          | selectattr('status.addresses', 'defined')
+          | selectattr('status.addresses', 'contains', {'type': 'InternalIP', 'address': target_node})
+          | map(attribute='metadata.name')
+          | list
+          | first) }}
+
+- name: Fail if no Kubernetes node matches {{ target_node }}
+  ansible.builtin.fail:
+    msg: "No Kubernetes node found with InternalIP {{ target_node }}"
+  when: not update_ubuntu_k8s_node_name
+
+- name: Update APT cache on {{ target_node }}
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+  delegate_to: "{{ target_node }}"
+  become: true
+  vars:
+    ansible_connection: ssh
+
+- name: Upgrade packages on {{ target_node }}
+  ansible.builtin.apt:
+    upgrade: full
+    autoclean: true
+    autoremove: true
+    purge: true
+    clean: true
+  delegate_to: "{{ target_node }}"
+  become: true
+  vars:
+    ansible_connection: ssh
+
+# delegate_to matters here: without it this stats the control node, where
+# /var/run/reboot-required never exists (it is a Debian/Ubuntu file, and the
+# control node is often a Mac), so the reboot below was silently always skipped and
+# nodes kept running old kernels after a full upgrade.
+- name: Verify if system reboot is necessary on {{ target_node }}
+  ansible.builtin.stat:
+    path: /var/run/reboot-required
+  register: _update_ubuntu_reboot_required
+  delegate_to: "{{ target_node }}"
+  vars:
+    ansible_connection: ssh
+
+# Everything from the cordon onwards runs inside a block whose `always`
+# uncordons. Without it, any failure between drain and uncordon leaves the node
+# SchedulingDisabled with no hint in the output that it happened — which is
+# exactly what a concurrent Ansible run against the same node once caused.
+# The block's `when` covers `always` too.
+- name: Drain, reboot and uncordon {{ target_node }}
+  when: _update_ubuntu_reboot_required.stat.exists
+  block:
+    - name: Cordon node {{ update_ubuntu_k8s_node_name }}
+      kubernetes.core.k8s_drain:
+        state: cordon
+        name: "{{ update_ubuntu_k8s_node_name }}"
+
+    # CloudNativePG instances with local storage stay on their node, and the
+    # primary's PDB refuses its eviction. The operator switches a primary away
+    # from a cordoned node by itself ("Current primary is running on
+    # unschedulable node"), so give it a minute; only a
+    # primary still here after that gets the explicit switchover.
+    - name: Wait for the CNPG operator to move primaries off {{ update_ubuntu_k8s_node_name }}
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: Pod
+        label_selectors:
+          - cnpg.io/instanceRole=primary
+        field_selectors:
+          - "spec.nodeName={{ update_ubuntu_k8s_node_name }}"
+      register: _update_ubuntu_cnpg_primaries_here
+      until: _update_ubuntu_cnpg_primaries_here.resources | length == 0
+      retries: 12
+      delay: 5
+      failed_when: false
+
+    - name: Name the primaries still on {{ update_ubuntu_k8s_node_name }}
+      ansible.builtin.set_fact:
+        _update_ubuntu_cnpg_primaries_left: >-
+          {%- set left = [] -%}
+          {%- for pod in _update_ubuntu_cnpg_primaries_here.resources | default([]) -%}
+            {%- set _ = left.append({'namespace': pod.metadata.namespace,
+                                     'name': pod.metadata.name,
+                                     'cluster': pod.metadata.labels['cnpg.io/cluster']}) -%}
+          {%- endfor -%}
+          {{ left }}
+
+    - name: Switch the CloudNativePG primaries still here over to a replica elsewhere, node {{ update_ubuntu_k8s_node_name }}
+      ansible.builtin.include_tasks: cnpg_switchover.yml
+      loop: "{{ _update_ubuntu_cnpg_primaries_left }}"
+      loop_control:
+        loop_var: cnpg_primary_pod
+        label: "{{ cnpg_primary_pod.namespace }}/{{ cnpg_primary_pod.name }}"
+
+    - name: Drain node {{ update_ubuntu_k8s_node_name }}
+      kubernetes.core.k8s_drain:
+        state: drain
+        name: "{{ update_ubuntu_k8s_node_name }}"
+        delete_options:
+          ignore_daemonsets: true
+          delete_emptydir_data: true
+
+    - name: Reboot node {{ target_node }}
+      ansible.builtin.reboot:
+      delegate_to: "{{ target_node }}"
+      become: true
+      vars:
+        ansible_connection: ssh
+
+    - name: Wait until this node is Ready, node {{ update_ubuntu_k8s_node_name }}
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: Node
+        name: "{{ update_ubuntu_k8s_node_name }}"
+        wait_condition:
+          type: Ready
+          status: "True"
+          reason: KubeletReady
+        wait_timeout: 300
+
+  always:
+    - name: Uncordon node {{ update_ubuntu_k8s_node_name }}
+      kubernetes.core.k8s_drain:
+        state: uncordon
+        name: "{{ update_ubuntu_k8s_node_name }}"

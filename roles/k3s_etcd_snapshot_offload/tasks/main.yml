@@ -1,0 +1,45 @@
+---
+# ADR-0009. Needs the NFS export on the central host first; until it exists, the
+# role still installs cleanly and only the timer's runs fail.
+- name: Install the NFS client and rsync
+  ansible.builtin.apt:
+    name:
+      - nfs-common
+      - rsync
+    state: present
+  become: true
+
+# /usr/local/sbin and root-owned: a root service must not execute a file a
+# non-root user can rewrite.
+- name: Install the copy script
+  ansible.builtin.template:
+    src: k3s-etcd-snapshot-offload.sh.j2
+    dest: /usr/local/sbin/k3s-etcd-snapshot-offload
+    owner: root
+    group: root
+    mode: '0755'
+    validate: /bin/bash -n %s
+  become: true
+
+- name: Install the service and timer units
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/etc/systemd/system/{{ item }}"
+    owner: root
+    group: root
+    mode: '0644'
+  become: true
+  loop:
+    - k3s-etcd-snapshot-offload.service
+    - k3s-etcd-snapshot-offload.timer
+  register: k3s_etcd_snapshot_offload_units
+
+- name: Enable the timer
+  ansible.builtin.systemd_service:
+    name: k3s-etcd-snapshot-offload.timer
+    enabled: true
+    state: started
+    daemon_reload: "{{ k3s_etcd_snapshot_offload_units is changed }}"
+  become: true
+  # In --check the unit files were not written, so there is nothing to enable.
+  when: not (ansible_check_mode and k3s_etcd_snapshot_offload_units is changed)

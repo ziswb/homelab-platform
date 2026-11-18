@@ -1,0 +1,19 @@
+---
+# The k3s cluster: node preparation, servers (one at a time), agents, then the
+# upgrader and node taints from the control node. Site-specific preparation
+# (board tuning, trusting a private root CA) is the site's own play before this
+# one (docs/bring-up.md, step 0).
+- name: Prepare the k3s nodes
+  ansible.builtin.import_playbook: ziswb.homelab_platform.prereq
+
+- name: Set up the k3s servers
+  ansible.builtin.import_playbook: ziswb.homelab_platform.k3s_server
+
+- name: Set up the k3s agents
+  ansible.builtin.import_playbook: ziswb.homelab_platform.k3s_agent
+
+- name: Set up the k3s upgrader
+  ansible.builtin.import_playbook: ziswb.homelab_platform.k3s_upgrader
+
+- name: Set up the k3s node taints
+  ansible.builtin.import_playbook: ziswb.homelab_platform.k3s_node_taints

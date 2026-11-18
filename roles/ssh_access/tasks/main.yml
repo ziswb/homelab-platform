@@ -1,0 +1,116 @@
+---
+# authorized_keys and the sshd drop-in in one block: if a fresh login fails
+# afterwards, both are put back over the connection Ansible still holds
+# (its ControlPersist master stays open across the change).
+- name: Look up the user's home
+  ansible.builtin.getent:
+    database: passwd
+    key: "{{ ssh_access_user }}"
+
+- name: Set the authorized_keys path
+  ansible.builtin.set_fact:
+    _ssh_access_keyfile: "{{ ansible_facts['getent_passwd'][ssh_access_user][4] }}/.ssh/authorized_keys"
+
+- name: Save the current authorized_keys for a rollback
+  become: true
+  ansible.builtin.slurp:
+    src: "{{ _ssh_access_keyfile }}"
+  register: _ssh_access_keys_before
+  failed_when: false
+
+- name: Manage SSH access
+  become: true
+  block:
+    - name: Write the authorized keys (exclusive)
+      ansible.posix.authorized_key:
+        user: "{{ ssh_access_user }}"
+        key: "{{ ssh_access_authorized_keys | join('\n') }}"
+        exclusive: true
+        manage_dir: true
+      register: _ssh_access_keys
+
+    - name: Write the sshd drop-in
+      ansible.builtin.template:
+        src: 10-homelab.conf.j2
+        dest: /etc/ssh/sshd_config.d/10-homelab.conf
+        owner: root
+        group: root
+        mode: "0600"
+        backup: true
+      register: _ssh_access_dropin
+      notify: Reload sshd
+
+    - name: Check the whole sshd configuration
+      ansible.builtin.command: sshd -t
+      changed_when: false
+
+    - name: Reload sshd now, before the login test
+      ansible.builtin.meta: flush_handlers
+
+    - name: Read the effective sshd settings
+      ansible.builtin.command: >-
+        sshd -T -C user={{ ssh_access_user }},host=localhost,addr=127.0.0.1
+      register: _ssh_access_effective
+      changed_when: false
+
+    - name: Assert the effective sshd settings
+      ansible.builtin.assert:
+        that:
+          - "'pubkeyauthentication yes' in _ssh_access_effective.stdout_lines"
+          - "'passwordauthentication no' in _ssh_access_effective.stdout_lines"
+          - "'kbdinteractiveauthentication no' in _ssh_access_effective.stdout_lines"
+          - "'permitrootlogin no' in _ssh_access_effective.stdout_lines"
+          - "'authorizedkeysfile .ssh/authorized_keys' in _ssh_access_effective.stdout_lines"
+        quiet: true
+      when: not ansible_check_mode
+
+    # A new connection, not Ansible's multiplexed one, with the agent's keys.
+    - name: Log in afresh from the control machine
+      ansible.builtin.command: >-
+        ssh -o BatchMode=yes -o ControlPath=none -o ConnectTimeout=10
+        -o PreferredAuthentications=publickey
+        -p {{ ansible_port | default(22) }}
+        {{ ssh_access_user }}@{{ inventory_hostname }} true
+      delegate_to: localhost
+      become: false
+      changed_when: false
+      when:
+        - ssh_access_verify_login | bool
+        - not ansible_check_mode
+
+  rescue:
+    - name: Put the previous authorized_keys back
+      ansible.builtin.copy:
+        content: "{{ _ssh_access_keys_before.content | b64decode }}"
+        dest: "{{ _ssh_access_keyfile }}"
+        owner: "{{ ssh_access_user }}"
+        mode: "0600"
+      when: _ssh_access_keys_before.content is defined
+
+    - name: Put the previous sshd drop-in back
+      ansible.builtin.copy:
+        src: "{{ _ssh_access_dropin.backup_file }}"
+        dest: /etc/ssh/sshd_config.d/10-homelab.conf
+        remote_src: true
+        mode: "0600"
+      when: _ssh_access_dropin.backup_file is defined
+      notify: Reload sshd
+
+    - name: Remove the new sshd drop-in (there was none before)
+      ansible.builtin.file:
+        path: /etc/ssh/sshd_config.d/10-homelab.conf
+        state: absent
+      when:
+        - _ssh_access_dropin is changed
+        - _ssh_access_dropin.backup_file is not defined
+      notify: Reload sshd
+
+    - name: Reload sshd with the old settings
+      ansible.builtin.meta: flush_handlers
+
+    - name: Stop here
+      ansible.builtin.fail:
+        msg: >-
+          {{ inventory_hostname }}: the new SSH settings failed; the previous
+          authorized_keys and sshd settings are back. Hosts after this one were
+          not touched.

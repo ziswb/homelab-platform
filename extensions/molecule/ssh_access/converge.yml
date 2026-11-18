@@ -1,0 +1,12 @@
+---
+- name: Converge
+  hosts: all
+  gather_facts: true
+  vars:
+    ssh_access_user: tester
+    ssh_access_authorized_keys:
+      # Test key; its private half was discarded.
+      - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICOwB5YvXh9rouX3mcVbLwPOmIEcRQNhPRMvjzXCK34T molecule@example.com"
+    ssh_access_verify_login: false
+  roles:
+    - ziswb.homelab_platform.ssh_access

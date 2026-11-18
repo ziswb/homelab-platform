@@ -1,0 +1,9 @@
+---
+- name: Apply the repo-owned node taints
+  kubernetes.core.k8s_taint:
+    state: present
+    name: "{{ item.node }}"
+    taints: "{{ item.taints }}"
+  loop: "{{ k3s_node_taints }}"
+  loop_control:
+    label: "{{ item.node }}"

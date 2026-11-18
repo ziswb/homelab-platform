@@ -1,0 +1,8 @@
+---
+# The k3s agents (roles/k3s_agent), after the servers.
+- name: Set up the k3s agents
+  hosts: agent
+  gather_facts: false  # the role needs no facts
+  become: true
+  roles:
+    - role: ziswb.homelab_platform.k3s_agent

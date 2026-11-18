@@ -8,3 +8,15 @@ Third-party material
 
 Vendored upstream manifests and charts keep their own licenses; each is listed
 here with its source, version and license when it is added.
+
+- k3s-ansible (https://github.com/k3s-io/k3s-ansible), Apache-2.0. The roles
+  prereq, k3s_server and k3s_agent are a modified, trimmed copy, last synced
+  with commit 5f06791; roles/k3s_server/README.md lists the changes.
+- system-upgrade-controller v0.21.0
+  (https://github.com/rancher/system-upgrade-controller), Apache-2.0.
+  roles/k3s_upgrader/files/: release YAML, with a checked edit to the
+  Deployment.
+- prometheus-operator v0.94.2
+  (https://github.com/prometheus-operator/prometheus-operator), Apache-2.0.
+  roles/prometheus_operator/files/bundle.yaml: release bundle, namespace
+  changed to monitoring.

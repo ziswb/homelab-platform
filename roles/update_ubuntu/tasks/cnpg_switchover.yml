@@ -1,0 +1,115 @@
+---
+# Hand one CloudNativePG primary on {{ update_ubuntu_k8s_node_name }} over to a
+# ready replica on another schedulable node, so that the drain can evict it. Included per
+# primary (`cnpg_primary_pod`: namespace, name, cluster) by update_single_node.yml.
+#
+# Why: with local storage each instance stays on its node, and the
+# operator's `<cluster>-primary` PodDisruptionBudget allows no eviction of the
+# primary, so a drain of its node is refused. A switchover first makes the
+# instance on this node a replica, which the `<cluster>` PDB lets go one at a
+# time. The patch is what `kubectl cnpg promote` sends (status subresource:
+# targetPrimary + phase); the plugin need not be installed on the control node.
+
+- name: Name the CloudNativePG cluster of {{ cnpg_primary_pod.name }}
+  ansible.builtin.set_fact:
+    _update_ubuntu_cnpg_namespace: "{{ cnpg_primary_pod.namespace }}"
+    _update_ubuntu_cnpg_cluster: "{{ cnpg_primary_pod.cluster }}"
+
+- name: Look up the CloudNativePG cluster {{ _update_ubuntu_cnpg_namespace ~ '/' ~ _update_ubuntu_cnpg_cluster }}
+  kubernetes.core.k8s_info:
+    api_version: postgresql.cnpg.io/v1
+    kind: Cluster
+    namespace: "{{ _update_ubuntu_cnpg_namespace }}"
+    name: "{{ _update_ubuntu_cnpg_cluster }}"
+  register: _update_ubuntu_cnpg_before
+
+# The operator may already be switching over (targetPrimary set, not yet
+# current): then only wait, never send a second switchover.
+- name: Note whether a switchover is already under way
+  ansible.builtin.set_fact:
+    _update_ubuntu_cnpg_in_progress: >-
+      {{ (_update_ubuntu_cnpg_before.resources[0].status.targetPrimary | default(''))
+         != (_update_ubuntu_cnpg_before.resources[0].status.currentPrimary | default('')) }}
+
+- name: Look up the instances of {{ _update_ubuntu_cnpg_namespace ~ '/' ~ _update_ubuntu_cnpg_cluster }}
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Pod
+    namespace: "{{ _update_ubuntu_cnpg_namespace }}"
+    label_selectors:
+      - "cnpg.io/cluster={{ _update_ubuntu_cnpg_cluster }}"
+  register: _update_ubuntu_cnpg_pods
+
+- name: Look up the nodes that are cordoned now
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Node
+  register: _update_ubuntu_cnpg_nodes
+
+- name: Pick a ready replica on another schedulable node for {{ _update_ubuntu_cnpg_namespace ~ '/' ~ _update_ubuntu_cnpg_cluster }}
+  ansible.builtin.set_fact:
+    _update_ubuntu_cnpg_target: >-
+      {%- set cordoned = _update_ubuntu_cnpg_nodes.resources
+            | selectattr('spec.unschedulable', 'defined')
+            | selectattr('spec.unschedulable')
+            | map(attribute='metadata.name') | list -%}
+      {%- set pick = namespace(name='') -%}
+      {%- for p in _update_ubuntu_cnpg_pods.resources
+            | selectattr('metadata.namespace', 'equalto', _update_ubuntu_cnpg_namespace)
+            | selectattr('metadata.labels', 'contains', 'cnpg.io/instanceRole') -%}
+        {%- if not pick.name
+              and p.metadata.labels['cnpg.io/cluster'] == _update_ubuntu_cnpg_cluster
+              and p.metadata.labels['cnpg.io/instanceRole'] == 'replica'
+              and p.spec.nodeName != update_ubuntu_k8s_node_name
+              and p.spec.nodeName not in cordoned
+              and (p.status.conditions | default([])
+                   | selectattr('type', 'equalto', 'Ready')
+                   | selectattr('status', 'equalto', 'True') | list) -%}
+          {%- set pick.name = p.metadata.name -%}
+        {%- endif -%}
+      {%- endfor -%}
+      {{ pick.name }}
+  when: not (_update_ubuntu_cnpg_in_progress | bool)
+
+- name: Refuse to drain without a replica to take over
+  ansible.builtin.fail:
+    msg: >-
+      {{ _update_ubuntu_cnpg_namespace }}/{{ _update_ubuntu_cnpg_cluster }} has its primary on
+      {{ update_ubuntu_k8s_node_name }} and no ready replica on another schedulable node, so
+      the drain would be refused. Check `kubectl -n {{ _update_ubuntu_cnpg_namespace }} get
+      clusters.postgresql.cnpg.io {{ _update_ubuntu_cnpg_cluster }}`.
+  when: not (_update_ubuntu_cnpg_in_progress | bool) and not _update_ubuntu_cnpg_target
+
+- name: Switch the CloudNativePG cluster over to {{ _update_ubuntu_cnpg_target }}
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - --namespace={{ _update_ubuntu_cnpg_namespace }}
+      - patch
+      - clusters.postgresql.cnpg.io
+      - "{{ _update_ubuntu_cnpg_cluster }}"
+      - --subresource=status
+      - --type=merge
+      - --patch
+      - >-
+        {{ {'status': {'targetPrimary': _update_ubuntu_cnpg_target,
+                       'phase': 'Switchover in progress',
+                       'phaseReason': 'Switching over to ' ~ _update_ubuntu_cnpg_target
+                                      ~ ' to drain ' ~ update_ubuntu_k8s_node_name}} | to_json }}
+  changed_when: true
+  when: not (_update_ubuntu_cnpg_in_progress | bool)
+
+- name: Wait until the cluster is healthy and its primary has left {{ cnpg_primary_pod.name }}
+  kubernetes.core.k8s_info:
+    api_version: postgresql.cnpg.io/v1
+    kind: Cluster
+    namespace: "{{ _update_ubuntu_cnpg_namespace }}"
+    name: "{{ _update_ubuntu_cnpg_cluster }}"
+  register: _update_ubuntu_cnpg_state
+  until: >-
+    _update_ubuntu_cnpg_state.resources | length == 1
+    and _update_ubuntu_cnpg_state.resources[0].status.currentPrimary | default('') not in ['', cnpg_primary_pod.name]
+    and _update_ubuntu_cnpg_state.resources[0].status.phase | default('') == 'Cluster in healthy state'
+  retries: 60
+  delay: 5
+  when: not ansible_check_mode

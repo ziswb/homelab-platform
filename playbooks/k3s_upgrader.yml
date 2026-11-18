@@ -1,0 +1,9 @@
+---
+# The system-upgrade-controller and its plans (roles/k3s_upgrader). Runs on
+# localhost against the cluster in the current kubeconfig context.
+- name: Set up the k3s upgrader
+  hosts: localhost
+  become: false
+  gather_facts: true
+  roles:
+    - role: ziswb.homelab_platform.k3s_upgrader

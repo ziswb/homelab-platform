@@ -1,0 +1,8 @@
+---
+argument_specs:
+  main:
+    short_description: system-upgrade-controller with plans for the k3s stable channel
+    description:
+      - Applies the vendored system-upgrade-controller release (namespace C(system-upgrade)) and its Plan CRD, server-side (ADR-0010).
+      - Plan C(control-node-plan) upgrades the servers one at a time, cordoned; C(worker-node-plan) then the agents. Both follow the k3s C(stable) channel.
+    options: {}

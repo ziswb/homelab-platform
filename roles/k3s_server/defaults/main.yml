@@ -1,0 +1,25 @@
+---
+# Synced with k3s-ansible 5f06791 (2026-10-08); local deviations in README.md.
+k3s_server_location: "/var/lib/rancher/k3s"
+# /etc/rancher/k3s/config.yaml holds the cluster token (upstream default 0644).
+k3s_server_config_mode: "0600"
+systemd_dir: "/etc/systemd/system"  # noqa var-naming[no-role-prefix]
+api_port: 6443  # noqa var-naming[no-role-prefix]
+kubeconfig: ~/.kube/config.new  # noqa var-naming[no-role-prefix]
+user_kubectl: true  # noqa var-naming[no-role-prefix]
+cluster_context: k3s-ansible  # noqa var-naming[no-role-prefix]
+server_group: server  # noqa var-naming[no-role-prefix]
+agent_group: agent  # noqa var-naming[no-role-prefix]
+
+# The server that starts a NEW embedded-etcd cluster (cluster-init). Unset on
+# an established cluster, and it must stay unset: then every server, the first
+# in the group included, joins through api_endpoint (server:). Upstream gives
+# the first host in server_group cluster-init, so a plain run against a
+# reinstalled first server starts a second, separate cluster.
+# Set it only to build a cluster from nothing:
+#   ansible-playbook ziswb.homelab_platform.k3s_cluster -e k3s_server_bootstrap_host=node-01
+# The role refuses it when any server already has etcd data, or when it is not
+# the first server of the play (the servers run one at a time).
+k3s_server_bootstrap_host: ""
+extra_server_args: "" # noqa var-naming[no-role-prefix]
+extra_install_envs: {} # noqa var-naming[no-role-prefix]

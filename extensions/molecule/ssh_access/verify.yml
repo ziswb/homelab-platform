@@ -1,0 +1,22 @@
+---
+- name: Verify
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Read the authorized keys
+      ansible.builtin.slurp:
+        src: /home/tester/.ssh/authorized_keys
+      register: ssh_access_keys
+
+    - name: Read the effective sshd settings
+      ansible.builtin.command: sshd -T -C user=tester,host=localhost,addr=127.0.0.1
+      register: ssh_access_sshd
+      changed_when: false
+
+    - name: Expect the one key and key-only login
+      ansible.builtin.assert:
+        that:
+          - (ssh_access_keys.content | b64decode).splitlines() | length == 1
+          - "'molecule@example.com' in (ssh_access_keys.content | b64decode)"
+          - "'passwordauthentication no' in ssh_access_sshd.stdout_lines"
+          - "'permitrootlogin no' in ssh_access_sshd.stdout_lines"

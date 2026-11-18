@@ -6,6 +6,27 @@ release. Each release is a git tag `vX.Y.Z`.
 
 ## Unreleased
 
+## 0.4.0
+
+Third batch: the k3s nodes.
+
+- Added `prereq`, `k3s_server`, `k3s_agent` (trimmed copy of k3s-ansible),
+  `k3s_upgrader`, `k3s_node_taints`, `k3s_etcd_snapshot_offload`,
+  `update_ubuntu`, `ssh_access`, with argument specs, READMEs and one playbook
+  each, plus `ziswb.homelab_platform.k3s_cluster` (prereq, servers one at a
+  time, agents, upgrader, node taints).
+- `k3s_server`/`k3s_agent`: `token`, `api_endpoint` and `k3s_version` are
+  required; k3s-ansible's variable names are kept.
+- `k3s_etcd_snapshot_offload`: `homelab_nfs_server` and `homelab_nfs_paths`
+  are required (platform variables).
+- `ssh_access`: `ssh_access_user` and `ssh_access_authorized_keys` are
+  required (no defaults).
+- `update_ubuntu`: internal variables renamed with the role's prefix (lint).
+- Molecule scenarios for `prereq` (Ubuntu 24.04) and `ssh_access` (Ubuntu
+  24.04 and Rocky Linux 10).
+- NOTICE lists the third-party material: k3s-ansible, system-upgrade-controller
+  and prometheus-operator.
+
 ## 0.3.0
 
 Second batch: the cluster add-ons.

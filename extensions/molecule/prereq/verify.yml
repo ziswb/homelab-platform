@@ -1,0 +1,18 @@
+---
+- name: Verify
+  hosts: server
+  gather_facts: false
+  tasks:
+    - name: Read IPv4 forwarding
+      ansible.builtin.command: sysctl -n net.ipv4.ip_forward
+      register: prereq_ip_forward
+      changed_when: false
+
+    - name: Read the installed packages
+      ansible.builtin.package_facts:
+
+    - name: Expect forwarding on and policycoreutils installed
+      ansible.builtin.assert:
+        that:
+          - prereq_ip_forward.stdout == '1'
+          - "'policycoreutils' in ansible_facts.packages"

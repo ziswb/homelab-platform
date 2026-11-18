@@ -1,0 +1,10 @@
+---
+# The k3s servers (roles/k3s_server). One server at a time: each waits until it
+# has joined and is an etcd voter before the next one may restart.
+- name: Set up the k3s servers
+  hosts: server
+  gather_facts: false  # the role needs no facts
+  become: true
+  serial: 1
+  roles:
+    - role: ziswb.homelab_platform.k3s_server

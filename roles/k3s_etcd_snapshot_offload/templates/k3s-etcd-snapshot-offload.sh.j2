@@ -1,0 +1,38 @@
+#!/bin/bash
+# {{ ansible_managed }}
+# Copy this node's etcd snapshots to the central server (ADR-0018). Run by
+# k3s-etcd-snapshot-offload.service; k3s itself is not touched.
+set -euo pipefail
+
+src='{{ k3s_etcd_snapshot_offload_source }}'
+mnt='{{ k3s_etcd_snapshot_offload_mount }}'
+share='{{ k3s_etcd_snapshot_offload_nfs_server }}:{{ k3s_etcd_snapshot_offload_nfs_path }}'
+node="$(hostname -s)"
+
+# No snapshot yet is not an error: a node that just joined has none until the
+# next 00:00/12:00.
+if [ -z "$(ls -A "$src" 2>/dev/null)" ]; then
+	echo "no snapshots in $src yet, nothing to copy"
+	exit 0
+fi
+
+mkdir -p "$mnt"
+# soft: if .2 is down, the run fails after timeo*retrans instead of hanging in
+# D state. A half-written file is impossible either way, because rsync writes
+# to a temporary name and renames it at the end.
+mount -t nfs4 -o soft,timeo=150,retrans=3,nosuid,nodev,noexec "$share" "$mnt"
+trap 'umount "$mnt" || umount -l "$mnt"' EXIT
+
+# --ignore-existing: a snapshot never changes once k3s has written it. k3s
+# writes to a .part file and renames it, so a snapshot in progress is skipped.
+# -t keeps the mtime, which the pruning below goes by. No owner or mode
+# transfer: the export squashes everything to one id, and 0600 is set here.
+rsync -rt --ignore-existing --exclude='*.part' --chmod=F0600 "$src"/ "$mnt"/
+
+# Only this node's scheduled snapshots. The pattern needs "etcd-snapshot-"
+# right before the node name, so on-demand ones (named "<name>-<node>-<ts>")
+# and other nodes' files are never touched.
+find "$mnt" -maxdepth 1 -type f -name "etcd-snapshot-${node}-[0-9]*" \
+	-mtime +{{ k3s_etcd_snapshot_offload_retention_days }} -print -delete
+
+echo "copied to $share: $(find "$mnt" -maxdepth 1 -type f -name "*-${node}-[0-9]*" | wc -l) snapshot(s) of $node there now"

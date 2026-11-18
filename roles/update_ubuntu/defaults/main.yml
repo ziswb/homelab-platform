@@ -1,0 +1,8 @@
+---
+# Health gate before each node and after the last (tasks/cluster_health_gate.yml).
+# k3s must have been running this long on every server: after an upgrade it
+# has come back on a server and exited again 4 minutes later.
+update_ubuntu_k3s_settle_seconds: 120
+# etcd "took too long" / "deadline exceeded" lines a server may log in the last
+# minute; a healthy one logs ~0.
+update_ubuntu_etcd_slow_warnings_max: 1

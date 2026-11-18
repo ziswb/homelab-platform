@@ -1,0 +1,27 @@
+---
+argument_specs:
+  main:
+    short_description: SSH login by public key only, with a rollback when a fresh login fails
+    description:
+      - >-
+        Writes the user's C(authorized_keys) (exclusive) and an sshd drop-in C(10-homelab.conf) (public key
+        only, no password, keyboard-interactive or root login), checks the effective sshd settings and tries
+        a new login from the control machine.
+      - If anything fails, the previous C(authorized_keys) and drop-in are put back and the play stops. Ubuntu and RHEL family.
+    options:
+      ssh_access_user:
+        type: str
+        required: true
+        description:
+          - The login user whose C(authorized_keys) the role manages.
+      ssh_access_authorized_keys:
+        type: list
+        elements: str
+        required: true
+        description:
+          - The complete list of public keys; any other key in the user's C(authorized_keys) is removed.
+      ssh_access_verify_login:
+        type: bool
+        default: true
+        description:
+          - Try a new SSH login from the control machine (to C(inventory_hostname)) after the change.

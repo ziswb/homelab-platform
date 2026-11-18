@@ -1,0 +1,24 @@
+---
+# ADR-0009: copy each server node's etcd snapshots to the central server.
+# k3s itself is left on its defaults (00:00/12:00, 5 retained locally); this
+# role only reads what k3s has already written.
+
+# Where k3s writes them. Same data dir as k3s_server (k3s_server_location).
+k3s_etcd_snapshot_offload_source: /var/lib/rancher/k3s/server/db/snapshots
+
+# The NFS export on the central host (platform variables, docs/variables.md).
+k3s_etcd_snapshot_offload_nfs_server: "{{ homelab_nfs_server }}"
+k3s_etcd_snapshot_offload_nfs_path: "{{ homelab_nfs_paths.etcd_snapshots }}"
+
+# Mounted for the run only, under /run, and unmounted at the end.
+k3s_etcd_snapshot_offload_mount: /run/etcd-snapshot-offload
+
+# Half an hour after each k3s snapshot. Persistent=true catches up a run that a
+# powered-off node missed.
+k3s_etcd_snapshot_offload_on_calendar: "*-*-* 00,12:30:00"
+
+# Scheduled snapshots (etcd-snapshot-<node>-*) older than this are pruned on
+# the central host, per node. 14 days = 28 per node (~0.7 GB at 25 MB each).
+# Backups of the central host may reach back further. On-demand snapshots
+# (`k3s etcd-snapshot save --name ...`) are never pruned: delete them by hand.
+k3s_etcd_snapshot_offload_retention_days: 14
