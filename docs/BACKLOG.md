@@ -47,6 +47,12 @@ side); what they find goes here.
    that task is never idempotent (no restart follows: the file ends up the
    same). Moving the token into the agent's `config.yaml`, as `k3s_server`
    does, would fix it but changes the deployed files. Found in 0.4.0.
+8. **`central_podman`: warning on the smoke test root file system links.**
+   The link task sets owner and group, and with the file module's default
+   `follow: true` Ansible tries to apply them to the targets, which exist
+   only inside the container: "Cannot set fs attributes on a non-existent
+   symlink target" on every run. `follow: false` on that task. Found in
+   1.2.0 on the reference host.
 
 ## Done
 
