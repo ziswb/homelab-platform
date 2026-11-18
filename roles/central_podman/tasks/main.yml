@@ -46,7 +46,8 @@
 # root file system: the /usr mount point and the merged-/usr symlinks of
 # Rocky Linux (the dynamic loader is under /lib or /lib64). The links resolve
 # only inside the container, where the host's /usr is mounted; on the host
-# they dangle, hence force.
+# they dangle, hence force, and follow: false so that owner and group apply to
+# the links, not to their missing targets.
 - name: Create the smoke test root file system
   ansible.builtin.file:
     path: /var/lib/central-podman-smoketest/rootfs/usr
@@ -63,6 +64,7 @@
     dest: "/var/lib/central-podman-smoketest/rootfs/{{ item }}"
     state: link
     force: true
+    follow: false
     owner: root
     group: root
   become: true

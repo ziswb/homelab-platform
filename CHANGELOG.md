@@ -6,6 +6,14 @@ release. Each release is a git tag `vX.Y.Z`.
 
 ## Unreleased
 
+## 1.2.1
+
+- Fixed: `central_podman` warned "Cannot set fs attributes on a non-existent
+  symlink target" on every run after the first: the task linking the smoke
+  test's root file system set owner and group through the links, whose
+  targets exist only inside the container. It sets `follow: false` now
+  (docs/BACKLOG.md 8). Nothing on the host changes.
+
 ## 1.2.0
 
 - `central_podman`: post-update smoke test (docs/BACKLOG.md 7, ADR-0008
