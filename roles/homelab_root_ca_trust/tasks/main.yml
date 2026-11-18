@@ -1,0 +1,20 @@
+---
+# The nodes trust the private root CA (cert-manager's homelab-ca, ADR-0007)
+# through the system CA store: update-ca-certificates links it into
+# /etc/ssl/certs, and k3s's embedded containerd uses the system roots, so pulls
+# from a registry with a homelab-ca certificate verify against it. Nothing else
+# is needed on a node: no key, no /etc/rancher/k3s/registries.yaml.
+#
+# The certificate arrives as a variable (ADR-0002): the site resolves it from
+# its own backup of the root CA, not from the cluster, because a fresh node
+# needs it before k3s exists. k3s's containerd reads the store only at start,
+# so run this role before k3s (docs/bring-up.md, step 0); a node that gets a
+# new root CA later needs a k3s restart.
+- name: Install the Homelab Root CA
+  ansible.builtin.copy:
+    content: "{{ homelab_root_ca_trust_certificate }}"
+    dest: /usr/local/share/ca-certificates/homelab-root-ca.crt
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Update ca-certificates

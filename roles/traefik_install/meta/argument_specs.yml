@@ -1,0 +1,39 @@
+---
+argument_specs:
+  main:
+    short_description: Traefik from its Helm chart, with vendored CRDs and a dashboard behind homelab-ca TLS
+    description:
+      - >-
+        Applies the vendored Traefik CRDs server-side (Helm installs a chart's CRDs only on first
+        install), then installs the C(traefik/traefik) chart in namespace C(traefik): HTTP redirected to
+        HTTPS, cross-namespace IngressRoutes, the Prometheus metrics Service on.
+      - The LoadBalancer Service asks MetalLB for C(homelab_lb_ips.traefik).
+      - >-
+        The dashboard is served on C(traefik_install_dashboard_host) under C(/dashboard) and C(/api)
+        with a certificate from the C(homelab-ca) ClusterIssuer (C(cert_manager)).
+    options:
+      homelab_domain:
+        type: str
+        required: true
+        description:
+          - The site's DNS domain; the dashboard host name defaults to C(traefik.<homelab_domain>).
+      homelab_lb_ips:
+        type: dict
+        required: true
+        description:
+          - LoadBalancer addresses by service; this role reads C(traefik).
+      traefik_install_dashboard_host:
+        type: str
+        default: "traefik.{{ homelab_domain }}"
+        description:
+          - Host name of the Traefik dashboard.
+      traefik_install_chart_version:
+        type: str
+        default: "42.3.1"
+        description:
+          - Version of the traefik/traefik chart. Re-vendor C(files/crds/) from the same chart version.
+      helm_binary:
+        type: str
+        default: helm
+        description:
+          - The helm executable; default from the C(helm_preflight) dependency.

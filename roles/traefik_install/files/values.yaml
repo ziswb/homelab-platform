@@ -1,0 +1,24 @@
+# Redirect all HTTP to HTTPS
+ports:
+  web:
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true
+
+providers:
+  # Enable cross namespace references
+  kubernetesCRD:
+    enabled: true
+    allowCrossNamespace: true
+  # Enable published service
+  kubernetesIngress:
+    publishedService:
+      enabled: true
+
+metrics:
+  prometheus:
+    service:
+      enabled: true

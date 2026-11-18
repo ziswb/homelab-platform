@@ -8,12 +8,10 @@ Traefik and MetalLB for ingress, Prometheus Operator, Loki and Alloy for
 monitoring. It is opinionated, not a general-purpose library; the decisions
 behind it are documented as [ADRs](docs/adr/).
 
-> **Status:** 1.0: the k3s install, the central host's Podman base and Loki,
-> cert-manager with the private CA chain, the CloudNativePG operator,
-> monitoring and log shipping, node maintenance (21 roles). Not yet in the
-> collection: MetalLB, the Traefik install and trusting the private root CA on
-> the nodes (planned for 1.1.0; until then the site's own, see
-> [bring-up](docs/bring-up.md)). See [CHANGELOG](CHANGELOG.md).
+> **Status:** 1.1: the k3s install, the nodes' trust in the private root CA,
+> the central host's Podman base and Loki, cert-manager with the private CA
+> chain, MetalLB and Traefik, the CloudNativePG operator, monitoring and log
+> shipping, node maintenance (24 roles). See [CHANGELOG](CHANGELOG.md).
 
 ## Supported
 

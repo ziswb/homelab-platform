@@ -21,3 +21,12 @@ extra_server_args: "--disable traefik --disable servicelb"
 ssh_access_user: admin
 ssh_access_authorized_keys:
   - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA-example-only admin@example.com"
+
+# MetalLB's pool and the addresses services ask for from it.
+metallb_addresses:
+  - 192.0.2.30-192.0.2.50
+homelab_lb_ips:
+  traefik: 192.0.2.30
+
+# homelab_root_ca_trust_certificate: the root CA certificate (PEM); resolve it
+# in your own inventory from your backup of the root CA.

@@ -1,0 +1,13 @@
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: default-pool
+  namespace: metallb-system
+spec:
+  addresses:
+{% for address in metallb_addresses %}
+  - {{ address }}
+{% endfor %}
+  # Only addresses requested by a Service (metallb.io/loadBalancerIPs, e.g. from
+  # homelab_lb_ips) are handed out; a Service without one stays pending.
+  autoAssign: false

@@ -45,3 +45,4 @@ What becomes easier, what becomes harder, what must be kept in mind.
 - [0011 — Kubernetes manifests are applied server-side, as field manager `ansible`](0011-kubernetes-manifests-applied-server-side.md)
 - [0012 — One way to ship each kind of Kubernetes resource](0012-one-way-to-ship-each-kind-of-kubernetes-resource.md)
 - [0013 — OS packages update themselves; reboots stay with the operator](0013-os-packages-update-themselves-reboots-stay-manual.md)
+- [0014 — Expose services LAN-first, Tailscale selectively](0014-service-exposure-lan-first.md)

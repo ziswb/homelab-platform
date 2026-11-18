@@ -1,0 +1,69 @@
+---
+- name: Add helm repo for traefik
+  kubernetes.core.helm_repository:
+    binary_path: "{{ helm_binary }}"
+    name: traefik
+    force_update: true
+    repo_url: "{{ traefik_install_chart_url }}"
+    state: present
+
+- name: Apply Traefik CRDs
+  # Helm applies a chart's crds/ on install only, never on upgrade, so the pinned
+  # chart_version below cannot keep these current on its own. They are vendored
+  # verbatim from the chart at that version - re-vendor them in the same commit as
+  # any bump; see files/crds/README.md. Server-side apply because the live CRDs were
+  # created without a last-applied-configuration annotation, and traefikservices
+  # alone is 92KB against the 256KB limit that annotation carries.
+  kubernetes.core.k8s:
+    state: present
+    src: "{{ item }}"
+    apply: true
+    server_side_apply:
+      field_manager: ansible-traefik
+      force_conflicts: true
+  with_fileglob:
+    - crds/*.yaml
+
+- name: Install helm chart for traefik
+  kubernetes.core.helm:
+    binary_path: "{{ helm_binary }}"
+    name: traefik
+    release_namespace: traefik
+    create_namespace: true
+    update_repo_cache: true
+    chart_ref: traefik/traefik
+    chart_version: "{{ traefik_install_chart_version }}"
+    state: present
+    values_files:
+      - "{{ role_path }}/files/values.yaml"
+    # The address comes from the site's homelab_lb_ips map, so it is set here
+    # rather than in the static values file (ADR-0012).
+    values:
+      service:
+        annotations:
+          metallb.io/loadBalancerIPs: "{{ homelab_lb_ips.traefik }}"
+
+
+- name: Gather information about traefik installation
+  kubernetes.core.helm_info:
+    binary_path: "{{ helm_binary }}"
+    name: traefik
+    release_namespace: traefik
+
+- name: Apply Traefik dashboard certificate
+  kubernetes.core.k8s:
+    apply: true
+    server_side_apply:
+      field_manager: ansible
+      force_conflicts: true
+    state: present
+    definition: "{{ lookup('template', 'traefik-dashboard-certificate.yaml.j2') | from_yaml_all | list }}"
+
+- name: Apply Traefik dashboard ingress manifest
+  kubernetes.core.k8s:
+    apply: true
+    server_side_apply:
+      field_manager: ansible
+      force_conflicts: true
+    state: present
+    definition: "{{ lookup('template', 'traefik-dashboard-ingressroute.yaml.j2') | from_yaml_all | list }}"

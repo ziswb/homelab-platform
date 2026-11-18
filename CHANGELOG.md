@@ -6,6 +6,27 @@ release. Each release is a git tag `vX.Y.Z`.
 
 ## Unreleased
 
+## 1.1.0
+
+The three roles a cluster needs first, deferred from 1.0.0 for their
+hostname and secret rework.
+
+- Added `metallb`, `traefik_install`, `homelab_root_ca_trust`, with argument
+  specs, READMEs and one playbook each.
+- `metallb`: `metallb_addresses` (the pool) is required.
+- `traefik_install`: `homelab_domain` and `homelab_lb_ips` (platform
+  variables, key `traefik`) are required; the dashboard host is
+  `traefik_install_dashboard_host`, default `traefik.{{ homelab_domain }}`.
+  Internal `traefik_chart_url` renamed `traefik_install_chart_url`.
+- `homelab_root_ca_trust`: the certificate arrives as
+  `homelab_root_ca_trust_certificate` (required); the role no longer looks it
+  up itself (ADR-0002).
+- ADR-0014 (LAN-first exposure through Traefik, Tailscale selectively), moved
+  from the reference site.
+- `docs/bring-up.md`: the root CA trust in step 0, MetalLB and Traefik after
+  `cert_manager`. NOTICE lists MetalLB and the Traefik chart.
+- Molecule scenario for `homelab_root_ca_trust` (Ubuntu 24.04).
+
 ## 1.0.0
 
 The first complete release: the 21 roles of the reference platform's

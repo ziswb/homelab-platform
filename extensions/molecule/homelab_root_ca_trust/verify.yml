@@ -1,0 +1,27 @@
+---
+- name: Verify
+  hosts: server
+  gather_facts: false
+  tasks:
+    - name: Look for the CA in the system store
+      ansible.builtin.stat:
+        path: /etc/ssl/certs/homelab-root-ca.pem
+      register: homelab_root_ca_trust_link
+
+    - name: Read the system bundle
+      ansible.builtin.command: grep -c "BEGIN CERTIFICATE" /etc/ssl/certs/ca-certificates.crt
+      register: homelab_root_ca_trust_bundle
+      changed_when: false
+
+    - name: Read the installed certificate
+      ansible.builtin.slurp:
+        src: /usr/local/share/ca-certificates/homelab-root-ca.crt
+      register: homelab_root_ca_trust_crt
+
+    - name: Expect the CA linked into the store and in the bundle
+      ansible.builtin.assert:
+        that:
+          - homelab_root_ca_trust_link.stat.exists
+          - homelab_root_ca_trust_link.stat.islnk
+          - "'BEGIN CERTIFICATE' in (homelab_root_ca_trust_crt.content | b64decode)"
+          - homelab_root_ca_trust_bundle.stdout | int > 0

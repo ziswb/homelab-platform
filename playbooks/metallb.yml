@@ -1,0 +1,9 @@
+---
+# MetalLB in L2 mode with its address pool (roles/metallb). Runs on localhost
+# against the cluster in the current kubeconfig context.
+- name: MetalLB
+  hosts: localhost
+  become: false
+  gather_facts: true
+  roles:
+    - role: ziswb.homelab_platform.metallb

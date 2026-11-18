@@ -1,0 +1,17 @@
+---
+argument_specs:
+  main:
+    short_description: The k3s nodes trust the private root CA through the system CA store
+    description:
+      - >-
+        Installs the root CA certificate as C(/usr/local/share/ca-certificates/homelab-root-ca.crt) and
+        runs C(update-ca-certificates). Ubuntu.
+      - Run it before k3s starts on a node (k3s's containerd reads the CA store only at start).
+    options:
+      homelab_root_ca_trust_certificate:
+        type: str
+        required: true
+        description:
+          - >-
+            The root CA certificate (PEM) behind cert-manager's C(homelab-ca) issuer. Resolve it in the
+            inventory from the site's backup of the root CA; the cluster may not exist yet.

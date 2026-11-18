@@ -1,0 +1,18 @@
+---
+argument_specs:
+  main:
+    short_description: MetalLB in L2 mode with one address pool that hands out requested addresses only
+    description:
+      - Applies the vendored MetalLB release (namespace C(metallb-system)), an IPAddressPool C(default-pool) and an L2Advertisement for it, server-side.
+      - >-
+        The pool has C(autoAssign false): a Service gets an address only when it asks for one
+        (annotation C(metallb.io/loadBalancerIPs), e.g. from C(homelab_lb_ips)); one without stays pending.
+    options:
+      metallb_addresses:
+        type: list
+        elements: str
+        required: true
+        description:
+          - >-
+            The pool's addresses on the LAN, as MetalLB ranges or CIDRs, e.g. C(192.0.2.10-192.0.2.50).
+            Keep them outside the DHCP range.

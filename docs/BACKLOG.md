@@ -24,7 +24,8 @@ side); what they find goes here.
    checked edits (`prometheus_operator`: namespace `monitoring`). The reference
    site's script is not in the collection yet. Found in 0.3.0; 0.4.0 adds
    `k3s_upgrader`'s system-upgrade-controller release (checked edit to the
-   Deployment).
+   Deployment); 1.1.0 `metallb`'s release manifest and `traefik_install`'s
+   CRDs (a verbatim copy from the chart, steps in its README).
 3. **Monitoring order on a fresh cluster.** The reference site applies
    `node_exporter`, `kube_state_metrics`, `kubelet` and
    `traefik_service_monitor` before `prometheus_operator`; on a fresh cluster

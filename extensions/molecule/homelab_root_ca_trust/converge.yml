@@ -1,0 +1,20 @@
+---
+- name: Converge
+  hosts: server
+  gather_facts: true
+  become: true
+  vars:
+    # Test CA, generated for this scenario; its key was discarded.
+    homelab_root_ca_trust_certificate: |
+      -----BEGIN CERTIFICATE-----
+      MIIBazCCARKgAwIBAgIUZH0iv/hu/wpS7RVj52+KkFruKacwCgYIKoZIzj0EAwIw
+      GzEZMBcGA1UEAwwQTW9sZWN1bGUgVGVzdCBDQTAgFw0yNjExMTgwODA5MzBaGA8y
+      MTI2MTAyNTA4MDkzMFowGzEZMBcGA1UEAwwQTW9sZWN1bGUgVGVzdCBDQTBZMBMG
+      ByqGSM49AgEGCCqGSM49AwEHA0IABO5WnATchcaSeGEsVIwv6jYVQRbJOw/UYcVG
+      bF/TFpJzQ132gwTxOUBqXZUcykpzbK//DIwlhm/IohJzgDC4+1+jMjAwMB0GA1Ud
+      DgQWBBQ4ALSD1Of+EE8dNGDg5FIVlODbQTAPBgNVHRMBAf8EBTADAQH/MAoGCCqG
+      SM49BAMCA0cAMEQCIB22Yl3CtrMCoYuIvlR7cBWHn52Al+SgHwQLKncl+zCMAiB3
+      Gddsud7xBkpYX2EUDIAqw5zgHGT4jjgzp9XZiwoh+Q==
+      -----END CERTIFICATE-----
+  roles:
+    - ziswb.homelab_platform.homelab_root_ca_trust

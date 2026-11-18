@@ -4,19 +4,16 @@ The order in which a new site applies the collection's playbooks. Each step
 depends on the ones before it. The playbooks are `ziswb.homelab_platform.<name>`
 and run standalone; `k3s_cluster` bundles the k3s install.
 
-> **Not in the collection yet** (planned for 1.1.0): MetalLB, the Traefik
-> install and trusting the private root CA on the nodes. Until then they are
-> the site's own: the CA trust in step 0, MetalLB and Traefik after
-> `cert_manager` in step 3 (`traefik_service_monitor` expects Traefik's metrics
-> Service).
+## 0. Before k3s: node preparation
 
-## 0. Before: your site's own preparation
-
-Anything your hardware or network needs before k3s starts, as your own play:
-for example board-specific tuning, or trusting a private root CA. Run it before
-step 2: k3s' containerd reads the system CA store once at start, so a node that
-trusts the CA only later fails every pull from a registry with that CA until k3s
-restarts.
+1. Anything your hardware or network needs before k3s starts, as your own play
+   (for example board-specific tuning).
+2. `homelab_root_ca_trust`: the nodes trust the private root CA. Before step 2:
+   k3s' containerd reads the system CA store once at start, so a node that
+   trusts the CA only later fails every pull from a registry with that CA until
+   k3s restarts. (The CA itself is created by `cert_manager` in step 3; on a
+   brand-new site, run this again after step 3 and restart k3s, or restore the
+   root CA from your backup before step 3.)
 
 ## 1. Central host (`central_server`)
 
@@ -44,15 +41,19 @@ first.
 
 1. `k3s_etcd_snapshot_offload`: etcd snapshots to the central host (needs
    the site's NFS export there).
-2. `cert_manager`.
-3. Monitoring: `prometheus_operator` first (the ServiceMonitor CRD the others
+2. `cert_manager`: the private CA chain and the `homelab-ca` issuer.
+3. `metallb`: LoadBalancer addresses from your pool (k3s runs with
+   `--disable servicelb`).
+4. `traefik_install`: the ingress (k3s runs with `--disable traefik`); needs
+   the issuer and MetalLB.
+5. Monitoring: `prometheus_operator` first (the ServiceMonitor CRD the others
    create objects of), then `node_exporter`, `kube_state_metrics`, `kubelet`,
    `traefik_service_monitor`, `pushgateway`. Your Prometheus and Alertmanager
    instances come after. (Helm prerequisites are checked by `helm_preflight`,
    a dependency of the Helm-based roles.)
-4. `cnpg_operator`: the CloudNativePG operator (database clusters are your own).
-5. `alloy`: log shipping to `central_loki`.
-6. `ssh_access` on the nodes (`--limit server:agent`).
+6. `cnpg_operator`: the CloudNativePG operator (database clusters are your own).
+7. `alloy`: log shipping to `central_loki`.
+8. `ssh_access` on the nodes (`--limit server:agent`).
 
 ## Maintenance (not part of bring-up)
 

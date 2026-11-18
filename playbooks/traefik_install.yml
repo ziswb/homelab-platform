@@ -1,0 +1,10 @@
+---
+# Traefik, its CRDs and dashboard (roles/traefik_install). Runs on localhost
+# against the cluster in the current kubeconfig context; needs cert_manager and
+# metallb first.
+- name: Traefik
+  hosts: localhost
+  become: false
+  gather_facts: true
+  roles:
+    - role: ziswb.homelab_platform.traefik_install

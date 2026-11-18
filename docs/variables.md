@@ -37,7 +37,8 @@ The names are fixed; the roles and playbooks refer to them.
 
 | Variable | Type | Required | Used by | Meaning |
 |---|---|---|---|---|
-| `homelab_domain` | str | yes | host name defaults | The site's DNS domain, e.g. `home.arpa` or `lab.example.com`. |
+| `homelab_domain` | str | yes | host name defaults (`traefik_install`) | The site's DNS domain, e.g. `home.arpa` or `lab.example.com`. |
+| `homelab_lb_ips` | dict | yes | `traefik_install` | LoadBalancer addresses by service, from the MetalLB pool, e.g. `{traefik: 192.0.2.10}`; each role names the keys it reads, a site adds its own. |
 | `homelab_loki_url` | str | yes | `alloy` | Base URL of Loki (`central_loki` listens on 3100), e.g. `http://loki.example.com:3100`. |
 | `homelab_nfs_server` | str | yes | `k3s_etcd_snapshot_offload` | Address of the NFS server on the central host. |
 | `homelab_nfs_paths` | dict | yes | `k3s_etcd_snapshot_offload` | Exported paths by purpose, e.g. `{etcd_snapshots: /srv/nfs/etcd-snapshots}`; each role names the keys it reads. |
