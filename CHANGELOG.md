@@ -6,6 +6,19 @@ release. Each release is a git tag `vX.Y.Z`.
 
 ## Unreleased
 
+## 1.3.0
+
+- New playbook `ziswb.homelab_platform.monitoring`: the monitoring roles in
+  the order a fresh cluster needs, `prometheus_operator` first (its CRDs),
+  then `node_exporter`, `kube_state_metrics`, `kubelet`,
+  `traefik_service_monitor`, `pushgateway` (docs/BACKLOG.md 3). The component
+  playbooks stay.
+- `update_ubuntu` and `ssh_access` use a host's `ansible_host` when it is set
+  and fall back to the inventory host name (docs/BACKLOG.md 5):
+  `update_ubuntu` maps a host to its Kubernetes node by that address,
+  `ssh_access`'s fresh login connects to it. Inventories that name hosts by
+  their address and set no `ansible_host` behave as before.
+
 ## 1.2.1
 
 - Fixed: `central_podman` warned "Cannot set fs attributes on a non-existent

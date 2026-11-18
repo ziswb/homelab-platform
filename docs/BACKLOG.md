@@ -26,22 +26,11 @@ side); what they find goes here.
    `k3s_upgrader`'s system-upgrade-controller release (checked edit to the
    Deployment); 1.1.0 `metallb`'s release manifest and `traefik_install`'s
    CRDs (a verbatim copy from the chart, steps in its README).
-3. **Monitoring order on a fresh cluster.** The reference site applies
-   `node_exporter`, `kube_state_metrics`, `kubelet` and
-   `traefik_service_monitor` before `prometheus_operator`; on a fresh cluster
-   their ServiceMonitors would fail without the CRD. The bring-up doc names the
-   working order; a `k3s`-level playbook bundling monitoring should enforce it.
-   Found in 0.3.0.
 4. **No Molecule scenario for `update_ubuntu`.** P8 planned one for v1.0.0
    (without the health gate), but every step after the first needs a cluster:
    the gate, the node lookup by InternalIP, cordon/drain. Testing it needs the
    tier-3 k3d cluster, or a switch that skips the Kubernetes parts (a feature).
    Found in 0.4.0.
-5. **Host names stand in for addresses.** `update_ubuntu` maps an inventory
-   host to its Kubernetes node by InternalIP and `ssh_access`'s login test
-   connects to `inventory_hostname`, so both expect the inventory host names
-   to be the nodes' addresses (the reference site's inventory). Falling back
-   to `ansible_host` would make them work with named hosts too. Found in 0.4.0.
 6. **`k3s_agent` reports changed on every run.** The install script empties
    `k3s-agent.service.env` each time and the role writes `K3S_TOKEN` back, so
    that task is never idempotent (no restart follows: the file ends up the
@@ -64,3 +53,17 @@ side); what they find goes here.
   only inside the container: "Cannot set fs attributes on a non-existent
   symlink target" on every run. `follow: false` on that task. Found in
   1.2.0 on the reference host. Done in 1.2.1.
+
+- **Monitoring order on a fresh cluster.** The reference site applies
+  `node_exporter`, `kube_state_metrics`, `kubelet` and
+  `traefik_service_monitor` before `prometheus_operator`; on a fresh cluster
+  their ServiceMonitors would fail without the CRD. The bring-up doc names the
+  working order; a `k3s`-level playbook bundling monitoring should enforce it.
+  Found in 0.3.0. Done in 1.3.0: playbook `monitoring`.
+
+- **Host names stand in for addresses.** `update_ubuntu` maps an inventory
+  host to its Kubernetes node by InternalIP and `ssh_access`'s login test
+  connects to `inventory_hostname`, so both expect the inventory host names
+  to be the nodes' addresses (the reference site's inventory). Falling back
+  to `ansible_host` would make them work with named hosts too. Found in 0.4.0.
+  Done in 1.3.0.
