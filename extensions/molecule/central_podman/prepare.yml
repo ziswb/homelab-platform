@@ -1,0 +1,23 @@
+---
+# Overlay storage does not work inside the test container (overlay over
+# overlayfs); a real host keeps the package default. The smoke test unit runs
+# plain `podman`, so the driver is set host-wide here, before the role. A
+# drop-in, since podman 6's vendor drop-in (/usr/share/containers/
+# storage.conf.d) overrides /etc/containers/storage.conf.
+- name: Prepare
+  hosts: central_server
+  gather_facts: false
+  tasks:
+    - name: Create the storage drop-in directory
+      ansible.builtin.file:
+        path: /etc/containers/storage.conf.d
+        state: directory
+        mode: '0755'
+
+    - name: Use the vfs storage driver
+      ansible.builtin.copy:
+        content: |
+          [storage]
+          driver = "vfs"
+        dest: /etc/containers/storage.conf.d/50-molecule-vfs.conf
+        mode: '0644'

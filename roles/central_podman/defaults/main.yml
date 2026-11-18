@@ -1,0 +1,16 @@
+---
+# Post-update smoke test (ADR-0008, amendment 2026-11-18):
+# a oneshot unit that starts a throwaway container with a published port, as
+# the Quadlets do, and writes the result for node_exporter's textfile
+# collector. It runs after every dnf-automatic run and at boot, so a broken
+# container stack shows the morning of the update instead of at the next
+# reboot. The alert on the metrics belongs to the site.
+central_podman_smoketest_enabled: true
+
+# The directory the host's node_exporter reads (--collector.textfile.directory);
+# the same default as central_os_updates_textfile_dir.
+central_podman_smoketest_textfile_dir: /var/lib/node_exporter/textfile
+
+# Host port the test container publishes, bound to 127.0.0.1 only. Pick a free
+# one; the container runs for a fraction of a second.
+central_podman_smoketest_port: 18080

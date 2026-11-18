@@ -41,3 +41,88 @@
     group: root
     mode: '0644'
   become: true
+
+# Post-update smoke test (ADR-0008, amendment 2026-11-18). The container's
+# root file system: the /usr mount point and the merged-/usr symlinks of
+# Rocky Linux (the dynamic loader is under /lib or /lib64). The links resolve
+# only inside the container, where the host's /usr is mounted; on the host
+# they dangle, hence force.
+- name: Create the smoke test root file system
+  ansible.builtin.file:
+    path: /var/lib/central-podman-smoketest/rootfs/usr
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  become: true
+  when: central_podman_smoketest_enabled
+
+- name: Link the merged-/usr directories into the smoke test root file system
+  ansible.builtin.file:
+    src: "usr/{{ item }}"
+    dest: "/var/lib/central-podman-smoketest/rootfs/{{ item }}"
+    state: link
+    force: true
+    owner: root
+    group: root
+  become: true
+  loop: [bin, sbin, lib, lib64]
+  when: central_podman_smoketest_enabled
+
+# Also created by the host's node_exporter setup and central_os_updates;
+# whichever runs first.
+- name: Create the textfile collector directory
+  ansible.builtin.file:
+    path: "{{ central_podman_smoketest_textfile_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  become: true
+  when: central_podman_smoketest_enabled
+
+- name: Install the smoke test script
+  ansible.builtin.copy:
+    src: central-podman-smoketest
+    dest: /usr/local/sbin/central-podman-smoketest
+    owner: root
+    group: root
+    mode: '0755'
+  become: true
+  register: central_podman_smoketest_script
+  when: central_podman_smoketest_enabled
+
+- name: Install the smoke test unit
+  ansible.builtin.template:
+    src: central-podman-smoketest.service.j2
+    dest: /etc/systemd/system/central-podman-smoketest.service
+    owner: root
+    group: root
+    mode: '0644'
+  become: true
+  register: central_podman_smoketest_unit
+  when: central_podman_smoketest_enabled
+
+# Enabled into multi-user.target (boot) and dnf-automatic.service (after each
+# update run); the latter link is harmless where dnf-automatic is not installed.
+- name: Enable the smoke test unit
+  ansible.builtin.systemd_service:
+    name: central-podman-smoketest.service
+    enabled: true
+    daemon_reload: "{{ central_podman_smoketest_unit is changed }}"
+  become: true
+  when:
+    - central_podman_smoketest_enabled
+    - not (ansible_check_mode and central_podman_smoketest_unit is changed)
+
+# Writes the metrics right away, so the site's stale-timestamp alert does not
+# wait for the next update run; fails the play if the stack is broken now.
+- name: Run the smoke test once
+  ansible.builtin.systemd_service:
+    name: central-podman-smoketest.service
+    state: started
+  become: true
+  when:
+    - central_podman_smoketest_enabled
+    - central_podman_smoketest_script is changed or central_podman_smoketest_unit is changed
+    - not ansible_check_mode

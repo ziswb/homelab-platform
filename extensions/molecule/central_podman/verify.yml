@@ -21,20 +21,49 @@
 
     # What broke on netavark 2 with the old iptables pin: a container with a
     # published port fails at start ("Must provide a valid firewall backend").
-    # `podman init` sets up the container's network, bridge and port
-    # forwarding rules included, through the pinned driver, without running
-    # anything; so the root file system is an empty directory with an empty
-    # executable, and no image is pulled. vfs: overlay storage does not work
-    # inside the test container.
-    - name: Create a container with a published port and set up its network
+    # The converge already ran the smoke test once (the unit was new).
+    - name: Read the smoke test metrics
+      ansible.builtin.slurp:
+        src: /var/lib/node_exporter/textfile/central-podman-smoketest.prom
+      register: central_podman_smoketest_prom
+
+    - name: List the units that pull in the smoke test
+      ansible.builtin.find:
+        paths:
+          - /etc/systemd/system/multi-user.target.wants
+          - /etc/systemd/system/dnf-automatic.service.wants
+        patterns: central-podman-smoketest.service
+        file_type: link
+      register: central_podman_smoketest_wants
+
+    - name: Expect a successful smoke test, enabled for boot and after dnf-automatic
+      ansible.builtin.assert:
+        that:
+          - "'central_podman_smoketest_success 1' in (central_podman_smoketest_prom.content | b64decode)"
+          - "(central_podman_smoketest_prom.content | b64decode) is search('central_podman_smoketest_last_run_timestamp_seconds [0-9]+')"
+          - central_podman_smoketest_wants.matched == 2
+
+    # The test must catch the outage it was made for: with the old pin the
+    # unit fails and reports 0.
+    - name: Break the stack the way netavark 2 did, run the smoke test, restore the pin
       ansible.builtin.shell:
         cmd: |
-          set -e
-          mkdir -p /tmp/central-podman-rootfs
-          install -m 0755 /dev/null /tmp/central-podman-rootfs/noop
-          podman --storage-driver vfs create --name central-podman-verify --network bridge \
-            --publish 18080:8080 --rootfs /tmp/central-podman-rootfs /noop
-          trap 'podman --storage-driver vfs rm -f central-podman-verify' EXIT
-          podman --storage-driver vfs init central-podman-verify
+          set -u
+          conf=/etc/containers/containers.conf.d/50-firewall-driver.conf
+          cp "$conf" /tmp/50-firewall-driver.conf.bak
+          printf '[network]\nfirewall_driver = "iptables"\n' > "$conf"
+          systemctl start central-podman-smoketest.service
+          rc=$?
+          cp /tmp/50-firewall-driver.conf.bak "$conf"
+          systemctl reset-failed central-podman-smoketest.service
+          echo "rc=$rc"
+          cat /var/lib/node_exporter/textfile/central-podman-smoketest.prom
         executable: /bin/bash
+      register: central_podman_smoketest_broken
       changed_when: false
+
+    - name: Expect the smoke test to fail and report it
+      ansible.builtin.assert:
+        that:
+          - "'rc=0' not in central_podman_smoketest_broken.stdout"
+          - "'central_podman_smoketest_success 0' in central_podman_smoketest_broken.stdout"

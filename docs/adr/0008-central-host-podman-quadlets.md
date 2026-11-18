@@ -54,3 +54,15 @@ alter the host's ruleset unnoticed. The earlier rule that changing the driver is
 upgrade forced it, and the reboot verified it. Firewalld stays inactive on the
 reference host, so netavark's table is the only ruleset; a site that runs
 firewalld should consider the `firewalld` driver instead.
+
+Follow-up, same day: unattended updates keep installing everything
+(ADR-0013); no container packages are held back. Instead `central_podman`
+(1.2.0) runs a **post-update smoke test**: a oneshot unit, pulled in by
+`dnf-automatic.service` and ordered after it, and run at boot, starts a
+throwaway container with a published port on the default bridge network. It
+needs no image (the host's `/usr`, mounted read-only, on an empty root file
+system), so it does not depend on a registry. The result goes to
+node_exporter's textfile collector as `central_podman_smoketest_success` (0/1)
+and `central_podman_smoketest_last_run_timestamp_seconds`; the alert on a
+failure or a stale timestamp belongs to the site. A change like netavark 2 then
+shows the morning of the update instead of at the next reboot.

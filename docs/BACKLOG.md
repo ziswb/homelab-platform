@@ -47,12 +47,13 @@ side); what they find goes here.
    that task is never idempotent (no restart follows: the file ends up the
    same). Moving the token into the agent's `config.yaml`, as `k3s_server`
    does, would fix it but changes the deployed files. Found in 0.4.0.
-7. **Post-update container smoke test in `central_podman`.** Decided
-   2026-11-18 after the netavark 2 outage (0.4.1): package updates keep
-   installing everything; instead, a oneshot unit ordered after the package
-   update service and run at boot starts a throwaway container with a
-   published port and writes `central_podman_smoketest_success` and a
-   timestamp to node-exporter's textfile directory. The alert on it belongs to
-   the site. Not started.
 
 ## Done
+
+- **Post-update container smoke test in `central_podman`.** Decided
+  2026-11-18 after the netavark 2 outage (0.4.1): package updates keep
+  installing everything; instead, a oneshot unit ordered after the package
+  update service and run at boot starts a throwaway container with a
+  published port and writes `central_podman_smoketest_success` and a
+  timestamp to node-exporter's textfile directory. The alert on it belongs to
+  the site. Done in 1.2.0.

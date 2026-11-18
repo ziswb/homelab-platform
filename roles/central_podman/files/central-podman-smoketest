@@ -1,0 +1,50 @@
+#!/bin/bash
+# Smoke test for the container stack after package updates (ADR-0008,
+# amendment 2026-11-18): start a throwaway container with a published port on
+# the default bridge network, as the Quadlets do, and write the result as
+# node_exporter textfile metrics.
+#
+# Usage: central-podman-smoketest OUTPUT_FILE HOST_PORT ROOTFS
+#
+# No image: ROOTFS holds only the /usr mount point and the merged-/usr
+# symlinks, and the host's /usr is mounted read-only, so nothing is pulled and
+# no registry is needed. The start goes through netavark (bridge, port
+# forwarding rules) and the OCI runtime, which is what failed after the
+# netavark 2 upgrade. SELinux labelling is off for this container only: the
+# test is about networking and the runtime, not about the policy.
+#
+# Exits 1 when the container did not run, after writing the metrics.
+set -euo pipefail
+
+out=$1
+port=$2
+rootfs=$3
+name=central-podman-smoketest
+
+# Left over from an interrupted run. A podman that cannot even do this fails
+# the run below as well, which then reports 0.
+podman rm --force --ignore "$name" >/dev/null || true
+
+success=0
+if podman run --rm --name "$name" --network bridge \
+    --publish "127.0.0.1:$port:8080" --security-opt label=disable \
+    --read-only --volume /usr:/usr:ro --rootfs "$rootfs" /usr/bin/true; then
+  success=1
+fi
+now=$(date +%s)
+
+# Temp file and rename, so node_exporter never reads half a file.
+tmp=$(mktemp "$(dirname "$out")/.central-podman-smoketest.XXXXXX")
+trap 'rm -f "$tmp"' EXIT
+{
+  echo "# HELP central_podman_smoketest_success 1 if the last smoke test container with a published port ran."
+  echo "# TYPE central_podman_smoketest_success gauge"
+  echo "central_podman_smoketest_success $success"
+  echo "# HELP central_podman_smoketest_last_run_timestamp_seconds When the smoke test last ran."
+  echo "# TYPE central_podman_smoketest_last_run_timestamp_seconds gauge"
+  echo "central_podman_smoketest_last_run_timestamp_seconds $now"
+} > "$tmp"
+chmod 0644 "$tmp"
+mv "$tmp" "$out"
+
+[ "$success" = 1 ]

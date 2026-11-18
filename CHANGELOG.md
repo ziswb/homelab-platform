@@ -6,6 +6,25 @@ release. Each release is a git tag `vX.Y.Z`.
 
 ## Unreleased
 
+## 1.2.0
+
+- `central_podman`: post-update smoke test (docs/BACKLOG.md 7, ADR-0008
+  follow-up to the 2026-11-18 amendment). A oneshot unit,
+  `central-podman-smoketest.service`, runs after each dnf-automatic run and at
+  boot, starts a throwaway container with a published port (no image, nothing
+  pulled) and writes `central_podman_smoketest_success` and
+  `central_podman_smoketest_last_run_timestamp_seconds` to node_exporter's
+  textfile directory. On by default; new optional variables
+  `central_podman_smoketest_enabled`, `central_podman_smoketest_textfile_dir`,
+  `central_podman_smoketest_port`. The role runs the test once when the unit
+  is installed, and fails the play if the test fails. The site adds the alert.
+- `central_podman`: the argument spec description named the old `iptables`
+  pin; it says `nftables` now.
+- Molecule `central_podman`: runs the smoke test unit, then sets the old
+  `iptables` pin again and expects the unit to fail and report 0. A prepare
+  step selects vfs storage through a `storage.conf.d` drop-in (podman 6's
+  vendor drop-in overrides `/etc/containers/storage.conf`).
+
 ## 1.1.0
 
 The three roles a cluster needs first, deferred from 1.0.0 for their

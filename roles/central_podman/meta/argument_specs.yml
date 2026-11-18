@@ -3,6 +3,20 @@ argument_specs:
   main:
     short_description: Install Podman for Quadlet-managed containers on the central host
     description:
-      - Installs C(podman) and C(slirp4netns) and pins netavark's firewall driver to iptables (ADR-0008).
+      - Installs C(podman) and C(slirp4netns) and pins netavark's firewall driver to nftables (ADR-0008).
+      - Installs a post-update smoke test unit (after each dnf-automatic run and at boot) that starts a container with a published port.
+      - The smoke test writes its result as node_exporter textfile metrics.
       - Used as a meta dependency by the central host roles that run containers as rootful Podman Quadlets.
-    options: {}
+    options:
+      central_podman_smoketest_enabled:
+        type: bool
+        default: true
+        description: Install and enable the post-update smoke test unit.
+      central_podman_smoketest_textfile_dir:
+        type: path
+        default: /var/lib/node_exporter/textfile
+        description: The node_exporter textfile collector directory the smoke test writes C(central-podman-smoketest.prom) to.
+      central_podman_smoketest_port:
+        type: int
+        default: 18080
+        description: Host port the test container publishes, bound to 127.0.0.1.

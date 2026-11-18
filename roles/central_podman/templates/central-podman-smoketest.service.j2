@@ -1,0 +1,15 @@
+# {{ ansible_managed }}
+# Post-update smoke test (ADR-0008, amendment 2026-11-18): runs after every
+# dnf-automatic run (central_os_updates) and at boot.
+[Unit]
+Description=Smoke test: start a container with a published port
+Wants=network-online.target
+After=network-online.target dnf-automatic.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/central-podman-smoketest {{ central_podman_smoketest_textfile_dir }}/central-podman-smoketest.prom {{ central_podman_smoketest_port }} /var/lib/central-podman-smoketest/rootfs
+TimeoutStartSec=2min
+
+[Install]
+WantedBy=multi-user.target dnf-automatic.service
