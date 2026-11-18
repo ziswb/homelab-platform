@@ -6,6 +6,15 @@ release. Each release is a git tag `vX.Y.Z`.
 
 ## Unreleased
 
+## 1.4.1
+
+- Fixed: `ssh_access`'s fresh login (1.3.0, 1.4.0) connected to the control
+  machine itself when a host had no `ansible_host`: the task runs delegated
+  to localhost, where `ansible_host` is the delegate's. The login test failed
+  and the role rolled the host back. Address and port are now taken from the
+  host's own variables before the delegated task (the port had the same flaw
+  since 0.4.0, unnoticed with port 22). Molecule asserts the login target.
+
 ## 1.4.0
 
 Changes deployed files. Applying it restarts `k3s-agent` on every agent

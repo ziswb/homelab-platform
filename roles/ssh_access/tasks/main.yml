@@ -64,13 +64,20 @@
         quiet: true
       when: not ansible_check_mode
 
+    # Here, not in the delegated task below: there ansible_host and
+    # ansible_port are the delegate's (localhost), not this host's.
+    - name: Name the address and port of the login test
+      ansible.builtin.set_fact:
+        _ssh_access_login_host: "{{ hostvars[inventory_hostname]['ansible_host'] | default(inventory_hostname) }}"
+        _ssh_access_login_port: "{{ hostvars[inventory_hostname]['ansible_port'] | default(22) }}"
+
     # A new connection, not Ansible's multiplexed one, with the agent's keys.
     - name: Log in afresh from the control machine
       ansible.builtin.command: >-
         ssh -o BatchMode=yes -o ControlPath=none -o ConnectTimeout=10
         -o PreferredAuthentications=publickey
-        -p {{ ansible_port | default(22) }}
-        {{ ssh_access_user }}@{{ ansible_host | default(inventory_hostname) }} true
+        -p {{ _ssh_access_login_port }}
+        {{ ssh_access_user }}@{{ _ssh_access_login_host }} true
       delegate_to: localhost
       become: false
       changed_when: false

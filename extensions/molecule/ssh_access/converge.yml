@@ -10,3 +10,14 @@
     ssh_access_verify_login: false
   roles:
     - ziswb.homelab_platform.ssh_access
+  post_tasks:
+    # The login test itself cannot run here (no SSH into the containers), but
+    # its target can be checked: 1.3.0 resolved ansible_host inside the
+    # delegated task and so logged in to the control machine itself.
+    - name: The login test targets this host, not the control machine
+      ansible.builtin.assert:
+        that:
+          - _ssh_access_login_host == (hostvars[inventory_hostname]['ansible_host'] | default(inventory_hostname))
+          - _ssh_access_login_host not in ['localhost', '127.0.0.1']
+          - _ssh_access_login_port | int == 22
+        quiet: true
