@@ -5,9 +5,9 @@ argument_specs:
     description:
       - Trimmed copy of k3s-ansible's agent role (deviations in C(roles/k3s_server/README.md)).
       - >-
-        Runs the k3s install script on every run (so the unit's C(--server) follows C(api_endpoint)), puts
-        the token in C(k3s-agent.service.env) and restarts the agent only when its config, unit or binary
-        changed.
+        Runs the k3s install script on every run (so the unit's C(--server) follows C(api_endpoint)), writes
+        the token and C(agent_config_yaml) to C(/etc/rancher/k3s/config.yaml) and restarts the agent only
+        when its config, unit or binary changed.
     options:
       token:
         type: str
@@ -34,7 +34,12 @@ argument_specs:
         type: str
         required: false
         description:
-          - k3s agent config as YAML text, written to C(/etc/rancher/k3s/config.yaml).
+          - k3s agent config as YAML text, merged over C(token) into C(/etc/rancher/k3s/config.yaml).
+      k3s_agent_config_mode:
+        type: str
+        default: "0600"
+        description:
+          - Mode of C(/etc/rancher/k3s/config.yaml) (it holds the token).
       extra_agent_args:
         type: str
         default: ""

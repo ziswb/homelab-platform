@@ -55,6 +55,8 @@ lists below.
   or agent restarts only when its `config.yaml`, unit, env file or binary
   changed, so re-running the playbook stays harmless.
 - **`config.yaml` mode 0600** (it holds the token; upstream default 0644).
+  Agents get their token there too (`k3s_agent_config_mode`), not in
+  `k3s-agent.service.env`.
   The k3s CLI reads that file on every call, so the user's `.bashrc` gets
   `export K3S_CONFIG_FILE=/dev/null` before the completion lines (tag
   `user-shell`); without it every login prints `permission denied` and
