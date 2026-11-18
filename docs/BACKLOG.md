@@ -7,18 +7,6 @@ side); what they find goes here.
 
 ## Open
 
-1. **Deployed files still name the infrastructure repository's ADRs and roles.**
-   Comments inside files the roles deploy as they are (`files/`, rendered
-   `templates/`) refer to infrastructure ADR numbers (e.g. ADR-0029 for this
-   collection's ADR-0013) and roles that are not in the collection
-   (`central_node_exporter`, `central_syslog`, `node_os_updates`). Changing
-   them during a move would change the deployed bytes; fix them in one release
-   that accepts the restart. Found in 0.2.0 (`central_loki`, `central_os_updates`).
-   0.4.0 adds `k3s_etcd_snapshot_offload` (unit and script: infrastructure
-   ADR-0018 for ADR-0009, the central host by its address' last octet, an SD
-   card) and `ssh_access` (sshd drop-in: an infrastructure backlog number;
-   changing it reloads sshd on every host).
-
 2. **No refresh script for vendored manifests.** ADR-0012 replaces vendored
    release YAML only through a script that downloads the release and makes the
    checked edits (`prometheus_operator`: namespace `monitoring`). The reference
@@ -31,11 +19,6 @@ side); what they find goes here.
    the gate, the node lookup by InternalIP, cordon/drain. Testing it needs the
    tier-3 k3d cluster, or a switch that skips the Kubernetes parts (a feature).
    Found in 0.4.0.
-6. **`k3s_agent` reports changed on every run.** The install script empties
-   `k3s-agent.service.env` each time and the role writes `K3S_TOKEN` back, so
-   that task is never idempotent (no restart follows: the file ends up the
-   same). Moving the token into the agent's `config.yaml`, as `k3s_server`
-   does, would fix it but changes the deployed files. Found in 0.4.0.
 
 ## Done
 
@@ -67,3 +50,23 @@ side); what they find goes here.
   to be the nodes' addresses (the reference site's inventory). Falling back
   to `ansible_host` would make them work with named hosts too. Found in 0.4.0.
   Done in 1.3.0.
+
+- **Deployed files still name the infrastructure repository's ADRs and roles.**
+  Comments inside files the roles deploy as they are (`files/`, rendered
+  `templates/`) refer to infrastructure ADR numbers (e.g. ADR-0029 for this
+  collection's ADR-0013) and roles that are not in the collection
+  (`central_node_exporter`, `central_syslog`, `node_os_updates`). Changing
+  them during a move would change the deployed bytes; fix them in one release
+  that accepts the restart. Found in 0.2.0 (`central_loki`, `central_os_updates`).
+  0.4.0 adds `k3s_etcd_snapshot_offload` (unit and script: infrastructure
+  ADR-0018 for ADR-0009, the central host by its address' last octet, an SD
+  card) and `ssh_access` (sshd drop-in: an infrastructure backlog number;
+  changing it reloads sshd on every host).
+  Done in 1.4.0.
+
+- **`k3s_agent` reports changed on every run.** The install script empties
+  `k3s-agent.service.env` each time and the role writes `K3S_TOKEN` back, so
+  that task is never idempotent (no restart follows: the file ends up the
+  same). Moving the token into the agent's `config.yaml`, as `k3s_server`
+  does, would fix it but changes the deployed files. Found in 0.4.0.
+  Done in 1.4.0.

@@ -6,6 +6,26 @@ release. Each release is a git tag `vX.Y.Z`.
 
 ## Unreleased
 
+## 1.4.0
+
+Changes deployed files. Applying it restarts `k3s-agent` on every agent
+(running pods stay), Loki and the dnf-automatic timer on the central host,
+reloads sshd on every host `ssh_access` runs on, and reloads systemd on the
+servers for the etcd snapshot copy unit.
+
+- `k3s_agent`: the token goes into `/etc/rancher/k3s/config.yaml` (mode
+  0600, new optional variable `k3s_agent_config_mode`), as on the servers,
+  instead of `k3s-agent.service.env`. The install script empties the env file
+  on every run, so writing the token back made the role report a change every
+  time (docs/BACKLOG.md 6). `agent_config_yaml` is now merged over the token
+  and rendered as YAML (was copied verbatim, mode 0644). The role asserts
+  that `token` is set.
+- Comments in deployed files name this collection's ADRs (ADR-0009,
+  ADR-0013) instead of the reference site's, and no longer refer to roles
+  outside the collection or to the reference site's hardware
+  (docs/BACKLOG.md 1): `central_loki`, `central_os_updates`,
+  `k3s_etcd_snapshot_offload`, `ssh_access`.
+
 ## 1.3.0
 
 - New playbook `ziswb.homelab_platform.monitoring`: the monitoring roles in
