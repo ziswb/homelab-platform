@@ -2,8 +2,8 @@ auth_enabled: false
 
 server:
   http_listen_port: 3100
-  # At info, Loki made 86% of /var/log/messages on this host (2026-09-25), and
-  # central_syslog now ships that journal to Loki itself.
+  # At info, Loki's own lines are most of the host's journal, and a journal
+  # shipped to Loki would carry them back into it.
   log_level: warn
 
 common:

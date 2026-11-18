@@ -1,5 +1,5 @@
 # {{ ansible_managed }}
 # Runs only when dnf-automatic succeeded; read by os-updates-textfile as the
-# last successful run (ADR-0029).
+# last successful run (ADR-0013).
 [Service]
 ExecStartPost=/usr/bin/touch {{ central_os_updates_success_stamp }}

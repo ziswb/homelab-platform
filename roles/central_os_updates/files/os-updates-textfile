@@ -1,13 +1,12 @@
 #!/bin/bash
 # Write pending OS updates and reboots as node_exporter textfile metrics
-# (Rocky / dnf; ADR-0029). The k3s nodes have the apt variant
-# (roles/node_os_updates), with the same metric names.
+# (RHEL family / dnf; ADR-0013).
 #
 # Usage: os-updates-textfile OUTPUT_FILE SUCCESS_STAMP
 #
 # Writes a temp file and renames it, so node_exporter never reads half a file.
-# On any error the old file stays and ages, which OsUpdatesMetricsMissing
-# reports.
+# On any error the old file stays and ages; an alert on
+# os_updates_textfile_last_run_timestamp_seconds catches that.
 set -euo pipefail
 
 out=$1

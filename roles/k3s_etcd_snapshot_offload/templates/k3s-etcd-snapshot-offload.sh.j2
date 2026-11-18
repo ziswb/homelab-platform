@@ -1,6 +1,6 @@
 #!/bin/bash
 # {{ ansible_managed }}
-# Copy this node's etcd snapshots to the central server (ADR-0018). Run by
+# Copy this node's etcd snapshots to the central server (ADR-0009). Run by
 # k3s-etcd-snapshot-offload.service; k3s itself is not touched.
 set -euo pipefail
 
@@ -17,7 +17,7 @@ if [ -z "$(ls -A "$src" 2>/dev/null)" ]; then
 fi
 
 mkdir -p "$mnt"
-# soft: if .2 is down, the run fails after timeo*retrans instead of hanging in
+# soft: if the NFS server is down, the run fails after timeo*retrans instead of hanging in
 # D state. A half-written file is impossible either way, because rsync writes
 # to a temporary name and renames it at the end.
 mount -t nfs4 -o soft,timeo=150,retrans=3,nosuid,nodev,noexec "$share" "$mnt"
