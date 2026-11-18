@@ -41,5 +41,10 @@ side); what they find goes here.
    connects to `inventory_hostname`, so both expect the inventory host names
    to be the nodes' addresses (the reference site's inventory). Falling back
    to `ansible_host` would make them work with named hosts too. Found in 0.4.0.
+6. **`k3s_agent` reports changed on every run.** The install script empties
+   `k3s-agent.service.env` each time and the role writes `K3S_TOKEN` back, so
+   that task is never idempotent (no restart follows: the file ends up the
+   same). Moving the token into the agent's `config.yaml`, as `k3s_server`
+   does, would fix it but changes the deployed files. Found in 0.4.0.
 
 ## Done
