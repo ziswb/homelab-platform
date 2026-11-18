@@ -4,6 +4,12 @@
   hosts: all
   gather_facts: true
   tasks:
+    # The Ubuntu test image ships without apt lists.
+    - name: Update the apt cache
+      ansible.builtin.apt:
+        update_cache: true
+      when: ansible_facts['os_family'] == 'Debian'
+
     - name: Install the SSH server
       ansible.builtin.package:
         name: openssh-server
