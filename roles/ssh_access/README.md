@@ -9,8 +9,9 @@ SSH login by public key only, for one user, on Ubuntu and RHEL-family hosts:
   (first value wins in sshd_config, and `10-` sorts before the distributions'
   `50-*.conf`);
 - `sshd -t`, a reload, the effective settings (`sshd -T`) asserted, and a new
-  login from the control machine (`ssh … <user>@<inventory_hostname> true`,
-  with the agent's keys, not Ansible's multiplexed connection).
+  login from the control machine (`ssh … <user>@<host> true` to `ansible_host`,
+  or the inventory host name without it, with the agent's keys, not Ansible's
+  multiplexed connection).
 
 If any of it fails, the previous `authorized_keys` and drop-in are put back over
 the connection Ansible still holds, sshd is reloaded and the play stops. Run it

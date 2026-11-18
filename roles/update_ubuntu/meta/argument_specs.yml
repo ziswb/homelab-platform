@@ -10,7 +10,9 @@ argument_specs:
       - >-
         Upgrades packages in place; only when the node then needs a reboot it is cordoned, CloudNativePG
         primaries are switched over to a replica elsewhere, the node is drained, rebooted and uncordoned.
-      - The inventory host names of the nodes must equal their Kubernetes C(InternalIP).
+      - >-
+        Each node's C(ansible_host), or its inventory host name when C(ansible_host) is not set, must equal
+        its Kubernetes C(InternalIP).
     options:
       update_ubuntu_k3s_settle_seconds:
         type: int

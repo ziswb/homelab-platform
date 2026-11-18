@@ -25,9 +25,10 @@ Playbook: `ziswb.homelab_platform.update_ubuntu` (runs on `localhost` against
 the cluster in the current kubeconfig context; the nodes need the SSH access
 the inventory gives them, and `become`).
 
-**Inventory host names must be the nodes' InternalIP** (as `kubectl get nodes
--o wide` shows it): the role maps each host to its Kubernetes node by that
-address, and fails before touching a host it cannot map.
+**Each node's `ansible_host` must be its InternalIP** (as `kubectl get nodes
+-o wide` shows it), or, without `ansible_host`, its inventory host name: the
+role maps each host to its Kubernetes node by that address, and fails before
+touching a host it cannot map.
 
 ## Variables
 

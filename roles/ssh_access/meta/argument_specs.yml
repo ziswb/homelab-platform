@@ -24,4 +24,4 @@ argument_specs:
         type: bool
         default: true
         description:
-          - Try a new SSH login from the control machine (to C(inventory_hostname)) after the change.
+          - Try a new SSH login from the control machine (to C(ansible_host), or C(inventory_hostname) without it) after the change.

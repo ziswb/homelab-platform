@@ -70,7 +70,7 @@
         ssh -o BatchMode=yes -o ControlPath=none -o ConnectTimeout=10
         -o PreferredAuthentications=publickey
         -p {{ ansible_port | default(22) }}
-        {{ ssh_access_user }}@{{ inventory_hostname }} true
+        {{ ssh_access_user }}@{{ ansible_host | default(inventory_hostname) }} true
       delegate_to: localhost
       become: false
       changed_when: false
