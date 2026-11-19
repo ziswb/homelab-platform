@@ -7,8 +7,8 @@ side); what they find goes here.
 
 ## Open
 
-Number new items from 15 (1 to 8 are done). Items keep their number when they
-move to Done; commits and the CHANGELOG cite them by it.
+Number new items from 15 (1 to 8, 11 and 12 are done). Items keep their
+number when they move to Done; commits and the CHANGELOG cite them by it.
 
 9. **`extra_service_envs` reports changed on every run.** The install script
    empties `k3s.service.env` / `k3s-agent.service.env` each time and
@@ -23,17 +23,6 @@ move to Done; commits and the CHANGELOG cite them by it.
     `helm_preflight` needs fixture binaries or a pinned helm. The README should
     say which roles tier 2 covers and that the cluster roles get a syntax
     check only. Found in the 1.5.0 review.
-
-11. **`update_ubuntu`'s health gate is untested.** The gate script is inline
-    in a `shell` task; as a template it could run in Molecule against stub
-    `systemctl`/`k3s`/`journalctl`. Its missing `set -e` went unnoticed
-    until the 1.5.0 review.
-
-12. **The example k3s version is older than the tested one.**
-    `examples/inventory` and the `k3s_version` example in `k3s_server`'s
-    argument spec name a v1.33 release; 1.5.0 was tested with v1.36 and the
-    pinned CloudNativePG operator supports 1.34 to 1.36. One value, both
-    places. Found in the 1.5.0 review.
 
 13. **"central server" in `k3s_etcd_snapshot_offload`'s deployed files.**
     The unit descriptions and the script comment use the infrastructure
@@ -115,3 +104,19 @@ move to Done; commits and the CHANGELOG cite them by it.
   only inside the container: "Cannot set fs attributes on a non-existent
   symlink target" on every run. `follow: false` on that task. Found in
   1.2.0 on the reference host. Done in 1.2.1.
+
+11. **`update_ubuntu`'s health gate is untested.** The gate script is inline
+    in a `shell` task; as a template it could run in Molecule against stub
+    `systemctl`/`k3s`/`journalctl`. Its missing `set -e` went unnoticed
+    until the 1.5.0 review.
+    Done in 1.6.0: the script is `templates/cluster_health_gate.sh.j2`
+    (rendered and run inline as before); the `update_ubuntu` scenario runs it
+    against stub commands, one case per check. It fails against the 1.5.0
+    script.
+
+12. **The example k3s version is older than the tested one.**
+    `examples/inventory` and the `k3s_version` example in `k3s_server`'s
+    argument spec name a v1.33 release; 1.5.0 was tested with v1.36 and the
+    pinned CloudNativePG operator supports 1.34 to 1.36. One value, both
+    places. Found in the 1.5.0 review.
+    Done in 1.6.0: v1.36.5+k3s1 in both places.
