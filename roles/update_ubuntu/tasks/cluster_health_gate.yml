@@ -10,7 +10,8 @@
 - name: Wait until k3s and etcd are healthy on every server
   ansible.builtin.shell:
     cmd: |
-      set -o pipefail
+      # -e: every check below must pass, not only the last one
+      set -eo pipefail
       # running, and for at least the settle time: k3s has come back on a
       # server and exited again 4 minutes later
       systemctl is-active --quiet k3s

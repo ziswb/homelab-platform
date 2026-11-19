@@ -6,6 +6,13 @@ release. Each release is a git tag `vX.Y.Z`.
 
 ## Unreleased
 
+- Fixed: `update_ubuntu`'s health gate only enforced its last check (slow
+  etcd warnings). The script had no `set -e`, so k3s being inactive, a k3s
+  that had not been running for `update_ubuntu_k3s_settle_seconds`, or a
+  failing `/readyz/etcd` passed the gate. Now every check must pass, as the
+  README and ADR-0013 describe. A server that just restarted k3s now holds
+  the play until the settle time is over.
+
 ## 1.5.0
 
 New optional feature; with its default nothing changes on the hosts.
