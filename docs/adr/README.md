@@ -46,3 +46,4 @@ What becomes easier, what becomes harder, what must be kept in mind.
 - [0012 — One way to ship each kind of Kubernetes resource](0012-one-way-to-ship-each-kind-of-kubernetes-resource.md)
 - [0013 — OS packages update themselves; reboots stay with the operator](0013-os-packages-update-themselves-reboots-stay-manual.md)
 - [0014 — Expose services LAN-first, Tailscale selectively](0014-service-exposure-lan-first.md)
+- [0015 — Pin by version; digests and hashes only where a bot keeps them current](0015-pin-by-version-not-by-digest.md)

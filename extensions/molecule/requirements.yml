@@ -6,5 +6,6 @@ collections:
   - name: community.docker
     version: "5.4.0"
   # The driver's create playbook uses ansible.posix.synchronize; also a
-  # dependency of this collection (galaxy.yml), same open range.
+  # dependency of this collection (galaxy.yml, within its range).
   - name: ansible.posix
+    version: "2.2.2"

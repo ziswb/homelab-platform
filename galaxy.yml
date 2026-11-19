@@ -22,8 +22,8 @@ tags:
   - linux
 dependencies:
   kubernetes.core: ">=6.5.0,<7.0.0"
-  community.general: ">=0.0.0"
-  ansible.posix: ">=0.0.0"
+  community.general: ">=14.0.0,<15.0.0"
+  ansible.posix: ">=2.0.0,<3.0.0"
 repository: https://github.com/ziswb/homelab-platform
 documentation: https://github.com/ziswb/homelab-platform#readme
 issues: https://github.com/ziswb/homelab-platform/issues
