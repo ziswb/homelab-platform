@@ -7,8 +7,45 @@ side); what they find goes here.
 
 ## Open
 
-Nothing open. Number new items from 9 (1 to 8 are done). Items keep their
-number when they move to Done; commits and the CHANGELOG cite them by it.
+Number new items from 15 (1 to 8 are done). Items keep their number when they
+move to Done; commits and the CHANGELOG cite them by it.
+
+9. **`extra_service_envs` reports changed on every run.** The install script
+   empties `k3s.service.env` / `k3s-agent.service.env` each time and
+   `lineinfile` writes the lines back (no restart follows; the file ends up
+   the same). Same cause as item 6. Passing them as `K3S_*`/`CONTAINERD_*`
+   through `extra_install_envs`, which the script writes itself, or another
+   way of writing the env file changes deployed files: a release note.
+   Found in the 1.5.0 review.
+
+10. **Molecule coverage of the host roles.** `central_os_updates` (Rocky 10)
+    and `k3s_etcd_snapshot_offload` (Ubuntu) fit the existing images;
+    `helm_preflight` needs fixture binaries or a pinned helm. The README should
+    say which roles tier 2 covers and that the cluster roles get a syntax
+    check only. Found in the 1.5.0 review.
+
+11. **`update_ubuntu`'s health gate is untested.** The gate script is inline
+    in a `shell` task; as a template it could run in Molecule against stub
+    `systemctl`/`k3s`/`journalctl`. Its missing `set -e` went unnoticed
+    until the 1.5.0 review.
+
+12. **The example k3s version is older than the tested one.**
+    `examples/inventory` and the `k3s_version` example in `k3s_server`'s
+    argument spec name a v1.33 release; 1.5.0 was tested with v1.36 and the
+    pinned CloudNativePG operator supports 1.34 to 1.36. One value, both
+    places. Found in the 1.5.0 review.
+
+13. **"central server" in `k3s_etcd_snapshot_offload`'s deployed files.**
+    The unit descriptions and the script comment use the infrastructure
+    repository's term; the collection says "central host". Changing them
+    reloads systemd units: do it in a release that changes those files
+    anyway. Found in the 1.5.0 review.
+
+14. **Unused k3s-ansible inputs.** `agent_group` (`k3s_server`, `prereq`),
+    `server_group` and `k3s_server_location` (`k3s_agent`) are declared and
+    defaulted but never read. Remove them (decide whether that counts as a
+    major release under the SemVer rule) or say in the spec that they are
+    accepted for inventory compatibility only. Found in the 1.5.0 review.
 
 ## Done
 
