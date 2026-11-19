@@ -6,6 +6,16 @@ release. Each release is a git tag `vX.Y.Z`.
 
 ## Unreleased
 
+No deployed file changes.
+
+- Changed: the collection dependencies are bounded to the major CI tests:
+  `community.general` 14.x, `ansible.posix` 2.x (were unbounded). ADR-0015
+  records how dependencies are pinned.
+- Docs: the Loki port and the Traefik dashboard have no authentication by
+  design (LAN-only; ADR-0014 amendment), now stated in both READMEs. README:
+  role table, overview diagram, how the collection relates to the private site
+  repository.
+
 ## 1.5.1
 
 No deployed file changes; applying it changes nothing on the hosts. On the
