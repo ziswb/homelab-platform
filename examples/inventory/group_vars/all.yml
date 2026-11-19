@@ -12,7 +12,7 @@ homelab_nfs_paths:
 
 # k3s (k3s_server, k3s_agent; k3s-ansible's names). `token` is a secret: set
 # it in your own inventory.
-k3s_version: v1.33.5+k3s1
+k3s_version: v1.36.5+k3s1
 # A load balancer in front of the servers' API (port 6443).
 api_endpoint: 192.0.2.10
 extra_server_args: "--disable traefik --disable servicelb"

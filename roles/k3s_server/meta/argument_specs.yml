@@ -28,7 +28,7 @@ argument_specs:
         type: str
         required: true
         description:
-          - k3s version the install script installs on a new node, e.g. C(v1.33.5+k3s1). Upgrades are C(k3s_upgrader)'s job; keep this at what the cluster runs.
+          - k3s version the install script installs on a new node, e.g. C(v1.36.5+k3s1). Upgrades are C(k3s_upgrader)'s job; keep this at what the cluster runs.
       api_port:
         type: int
         default: 6443
