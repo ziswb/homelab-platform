@@ -8,6 +8,6 @@ This is a personal homelab project, maintained on a best-effort basis. Only the 
 release is supported.
 
 Code-level findings in this collection's roles are tracked in
-`docs/SECURITY-FINDINGS.md`. A finding is published there once it is fixed, with the
+[`docs/SECURITY-FINDINGS.md`](../docs/SECURITY-FINDINGS.md). A finding is published there once it is fixed, with the
 release that fixes it; open findings stay private until then. Findings about a
 particular site's configuration are not tracked here.
