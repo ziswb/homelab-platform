@@ -1,0 +1,71 @@
+---
+- name: Converge
+  hosts: all
+  gather_facts: false
+  vars:
+    # Nodes as k8s_info returns them (only the fields the role reads).
+    nodes:
+      resources:
+        - metadata: {name: server-1}
+          status:
+            addresses:
+              - {type: InternalIP, address: 192.0.2.11}
+              - {type: Hostname, address: server-1}
+        - metadata: {name: agent-1}
+          status:
+            addresses:
+              - {type: InternalIP, address: 192.0.2.21}
+              - {type: Hostname, address: agent-1}
+        - metadata: {name: agent-2}
+          spec: {unschedulable: true}
+          status:
+            addresses:
+              - {type: ExternalIP, address: 192.0.2.22}
+        - metadata: {name: agent-3}
+          spec: {unschedulable: false}
+          status: {}
+  tasks:
+    # One host named by its address, one by name with ansible_host, one with
+    # an address no node has as InternalIP (agent-2 has it as ExternalIP).
+    - name: Add inventory hosts for the node lookup
+      ansible.builtin.add_host:
+        name: "{{ item.name }}"
+        ansible_host: "{{ item.ansible_host | default(omit) }}"
+      loop:
+        - {name: 192.0.2.11}
+        - {name: agent-one, ansible_host: 192.0.2.21}
+        - {name: agent-two, ansible_host: 192.0.2.22}
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Node lookup cases
+      ansible.builtin.include_tasks: tasks/node_name_case.yml
+      loop:
+        - {target: 192.0.2.11, expect: server-1}
+        - {target: agent-one, expect: agent-1}
+        - {target: agent-two, expect: ""}
+      loop_control:
+        loop_var: case
+        label: "{{ case.target }}"
+
+    - name: CloudNativePG switchover target cases
+      ansible.builtin.include_tasks: tasks/cnpg_target_case.yml
+      loop:
+        - name: ready replica on a schedulable other node
+          pods: [db-1-primary, db-1-replica-ok]
+          expect: db-1-2
+        - name: first match wins
+          pods: [db-1-primary, db-1-replica-ok, db-1-replica-ok-2]
+          expect: db-1-2
+        - name: no replica on the node being drained, a cordoned node, or not ready
+          pods: [db-1-primary, db-1-replica-same-node, db-1-replica-cordoned, db-1-replica-not-ready, db-1-replica-no-conditions]
+          expect: ""
+        - name: skip the other cluster, the other namespace and unlabelled pods
+          pods: [db-1-primary, db-2-replica, other-ns-replica, unlabelled, db-1-replica-ok-2]
+          expect: db-1-4
+        - name: a node with unschedulable false is not cordoned
+          pods: [db-1-primary, db-1-replica-uncordoned]
+          expect: db-1-6
+      loop_control:
+        loop_var: case
+        label: "{{ case.name }}"

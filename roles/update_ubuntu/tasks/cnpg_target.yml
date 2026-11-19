@@ -1,0 +1,32 @@
+---
+# Pick the replica a CloudNativePG cluster switches over to: a ready replica
+# of _update_ubuntu_cnpg_namespace/_update_ubuntu_cnpg_cluster that is neither
+# on update_ubuntu_k8s_node_name nor on a cordoned node, from
+# _update_ubuntu_cnpg_pods and _update_ubuntu_cnpg_nodes (k8s_info results).
+# Sets _update_ubuntu_cnpg_target, empty when there is none. Imported by
+# cnpg_switchover.yml; a task file of its own so that Molecule
+# (extensions/molecule/update_ubuntu) can test it with fixtures.
+
+- name: Pick a ready replica on another schedulable node for {{ _update_ubuntu_cnpg_namespace ~ '/' ~ _update_ubuntu_cnpg_cluster }}
+  ansible.builtin.set_fact:
+    _update_ubuntu_cnpg_target: >-
+      {%- set cordoned = _update_ubuntu_cnpg_nodes.resources
+            | selectattr('spec.unschedulable', 'defined')
+            | selectattr('spec.unschedulable')
+            | map(attribute='metadata.name') | list -%}
+      {%- set pick = namespace(name='') -%}
+      {%- for p in _update_ubuntu_cnpg_pods.resources
+            | selectattr('metadata.namespace', 'equalto', _update_ubuntu_cnpg_namespace)
+            | selectattr('metadata.labels', 'contains', 'cnpg.io/instanceRole') -%}
+        {%- if not pick.name
+              and p.metadata.labels['cnpg.io/cluster'] == _update_ubuntu_cnpg_cluster
+              and p.metadata.labels['cnpg.io/instanceRole'] == 'replica'
+              and p.spec.nodeName != update_ubuntu_k8s_node_name
+              and p.spec.nodeName not in cordoned
+              and (p.status.conditions | default([])
+                   | selectattr('type', 'equalto', 'Ready')
+                   | selectattr('status', 'equalto', 'True') | list) -%}
+          {%- set pick.name = p.metadata.name -%}
+        {%- endif -%}
+      {%- endfor -%}
+      {{ pick.name }}

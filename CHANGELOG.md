@@ -6,6 +6,16 @@ release. Each release is a git tag `vX.Y.Z`.
 
 ## Unreleased
 
+- Fixed: `update_ubuntu` failed with "No first item, sequence was empty"
+  when a host had no Kubernetes node with its address as InternalIP, instead
+  of its own message naming the host and address (since 0.4.0). The
+  outcome was the same (the play stopped before touching the host).
+- New Molecule scenario `update_ubuntu` (docs/BACKLOG.md 4): tests the node
+  lookup by InternalIP and the choice of the CloudNativePG switchover target
+  on fixture API results. Both moved into task files of their own
+  (`tasks/node_name.yml`, `tasks/cnpg_target.yml`), imported where they
+  were, so the role runs the same tasks. The health gate, the
+  upgrade and the drain still need a cluster and stay untested.
 - New `scripts/refresh-vendored.sh` (not part of the built collection): the
   one way to replace vendored upstream YAML (ADR-0012), for MetalLB, the
   prometheus-operator bundle, the system-upgrade-controller and Traefik's

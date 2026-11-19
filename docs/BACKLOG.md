@@ -7,13 +7,18 @@ side); what they find goes here.
 
 ## Open
 
-4. **No Molecule scenario for `update_ubuntu`.** P8 planned one for v1.0.0
-   (without the health gate), but every step after the first needs a cluster:
-   the gate, the node lookup by InternalIP, cordon/drain. Testing it needs the
-   tier-3 k3d cluster, or a switch that skips the Kubernetes parts (a feature).
-   Found in 0.4.0.
+Nothing open. Number new items from 9 (1 to 8 are done).
 
 ## Done
+
+- **No Molecule scenario for `update_ubuntu`.** P8 planned one for v1.0.0
+  (without the health gate), but every step after the first needs a cluster:
+  the gate, the node lookup by InternalIP, cordon/drain. Testing it needs the
+  tier-3 k3d cluster, or a switch that skips the Kubernetes parts (a feature).
+  Found in 0.4.0.
+  Done in the next release, without a cluster: the scenario tests the node
+  lookup and the switchover target pick on fixtures (it found the error
+  on a host without a matching node, see CHANGELOG); the gate and the node steps stay untested.
 
 - **No refresh script for vendored manifests.** ADR-0012 replaces vendored
   release YAML only through a script that downloads the release and makes the

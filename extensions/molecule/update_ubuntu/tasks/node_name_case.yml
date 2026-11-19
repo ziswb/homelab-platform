@@ -1,0 +1,13 @@
+---
+- name: Look up the node for {{ case.target }}
+  ansible.builtin.include_role:
+    name: ziswb.homelab_platform.update_ubuntu
+    tasks_from: node_name.yml
+  vars:
+    target_node: "{{ case.target }}"
+    _update_ubuntu_k8s_nodes: "{{ nodes }}"
+
+- name: Expect the expected node for {{ case.target }}
+  ansible.builtin.assert:
+    that: update_ubuntu_k8s_node_name == case.expect
+    fail_msg: "got {{ update_ubuntu_k8s_node_name | to_json }}, expected {{ case.expect | to_json }}"

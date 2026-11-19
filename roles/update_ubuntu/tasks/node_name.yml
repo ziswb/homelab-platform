@@ -1,0 +1,24 @@
+---
+# Map target_node to its Kubernetes node name, from _update_ubuntu_k8s_nodes
+# (k8s_info of all Nodes). Sets update_ubuntu_k8s_node_name, empty when no
+# node matches. Imported by update_single_node.yml; a task file of its own so
+# that Molecule (extensions/molecule/update_ubuntu) can test it with fixtures.
+
+# `first` of an empty list is undefined: without the default, a host without
+# a matching node failed here with "No first item, sequence was empty" instead
+# of the clear message of the next task in update_single_node.yml.
+#
+# The node's address is its ansible_host, or the inventory host name when the
+# inventory names hosts by their address.
+- name: Resolve k8s node name from internal IP {{ target_node }}
+  vars:
+    _update_ubuntu_node_address: "{{ hostvars[target_node]['ansible_host'] | default(target_node) }}"
+  ansible.builtin.set_fact:
+    update_ubuntu_k8s_node_name: >-
+      {{ (_update_ubuntu_k8s_nodes.resources
+          | selectattr('status.addresses', 'defined')
+          | selectattr('status.addresses', 'contains', {'type': 'InternalIP', 'address': _update_ubuntu_node_address})
+          | map(attribute='metadata.name')
+          | list
+          | first
+          | default('')) }}

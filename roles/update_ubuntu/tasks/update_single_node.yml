@@ -14,19 +14,8 @@
     kind: Node
   register: _update_ubuntu_k8s_nodes
 
-# The node's address is its ansible_host, or the inventory host name when the
-# inventory names hosts by their address.
-- name: Resolve k8s node name from internal IP {{ target_node }}
-  vars:
-    _update_ubuntu_node_address: "{{ hostvars[target_node]['ansible_host'] | default(target_node) }}"
-  ansible.builtin.set_fact:
-    update_ubuntu_k8s_node_name: >-
-      {{ (_update_ubuntu_k8s_nodes.resources
-          | selectattr('status.addresses', 'defined')
-          | selectattr('status.addresses', 'contains', {'type': 'InternalIP', 'address': _update_ubuntu_node_address})
-          | map(attribute='metadata.name')
-          | list
-          | first) }}
+- name: Resolve k8s node name for {{ target_node }}
+  ansible.builtin.import_tasks: node_name.yml
 
 - name: Fail if no Kubernetes node matches {{ target_node }}
   ansible.builtin.fail:

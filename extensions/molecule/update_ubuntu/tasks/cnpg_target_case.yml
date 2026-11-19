@@ -1,0 +1,65 @@
+---
+# Pods by key, as k8s_info returns them (only the fields the role reads).
+# Draining node agent-1; agent-2 is cordoned, agent-3 has unschedulable false.
+- name: Pick the switchover target, {{ case.name }}
+  ansible.builtin.include_role:
+    name: ziswb.homelab_platform.update_ubuntu
+    tasks_from: cnpg_target.yml
+  vars:
+    update_ubuntu_k8s_node_name: agent-1
+    _update_ubuntu_cnpg_namespace: db
+    _update_ubuntu_cnpg_cluster: db-1
+    _update_ubuntu_cnpg_nodes: "{{ nodes }}"
+    _update_ubuntu_cnpg_pods:
+      resources: "{{ case.pods | map('extract', pod_fixtures) | list }}"
+    ready: [{type: Ready, status: "True"}]
+    pod_fixtures:
+      db-1-primary:
+        metadata: {name: db-1-1, namespace: db, labels: {cnpg.io/cluster: db-1, cnpg.io/instanceRole: primary}}
+        spec: {nodeName: agent-1}
+        status: {conditions: "{{ ready }}"}
+      db-1-replica-ok:
+        metadata: {name: db-1-2, namespace: db, labels: {cnpg.io/cluster: db-1, cnpg.io/instanceRole: replica}}
+        spec: {nodeName: server-1}
+        status: {conditions: "{{ ready }}"}
+      db-1-replica-ok-2:
+        metadata: {name: db-1-4, namespace: db, labels: {cnpg.io/cluster: db-1, cnpg.io/instanceRole: replica}}
+        spec: {nodeName: server-1}
+        status: {conditions: "{{ ready }}"}
+      db-1-replica-same-node:
+        metadata: {name: db-1-3, namespace: db, labels: {cnpg.io/cluster: db-1, cnpg.io/instanceRole: replica}}
+        spec: {nodeName: agent-1}
+        status: {conditions: "{{ ready }}"}
+      db-1-replica-cordoned:
+        metadata: {name: db-1-5, namespace: db, labels: {cnpg.io/cluster: db-1, cnpg.io/instanceRole: replica}}
+        spec: {nodeName: agent-2}
+        status: {conditions: "{{ ready }}"}
+      db-1-replica-not-ready:
+        metadata: {name: db-1-7, namespace: db, labels: {cnpg.io/cluster: db-1, cnpg.io/instanceRole: replica}}
+        spec: {nodeName: server-1}
+        status: {conditions: [{type: Ready, status: "False"}]}
+      db-1-replica-no-conditions:
+        metadata: {name: db-1-8, namespace: db, labels: {cnpg.io/cluster: db-1, cnpg.io/instanceRole: replica}}
+        spec: {nodeName: server-1}
+        status: {}
+      db-1-replica-uncordoned:
+        metadata: {name: db-1-6, namespace: db, labels: {cnpg.io/cluster: db-1, cnpg.io/instanceRole: replica}}
+        spec: {nodeName: agent-3}
+        status: {conditions: "{{ ready }}"}
+      db-2-replica:
+        metadata: {name: db-2-2, namespace: db, labels: {cnpg.io/cluster: db-2, cnpg.io/instanceRole: replica}}
+        spec: {nodeName: server-1}
+        status: {conditions: "{{ ready }}"}
+      other-ns-replica:
+        metadata: {name: db-1-2, namespace: other, labels: {cnpg.io/cluster: db-1, cnpg.io/instanceRole: replica}}
+        spec: {nodeName: server-1}
+        status: {conditions: "{{ ready }}"}
+      unlabelled:
+        metadata: {name: db-1-9, namespace: db, labels: {cnpg.io/cluster: db-1}}
+        spec: {nodeName: server-1}
+        status: {conditions: "{{ ready }}"}
+
+- name: Expect the expected switchover target, {{ case.name }}
+  ansible.builtin.assert:
+    that: _update_ubuntu_cnpg_target == case.expect
+    fail_msg: "got {{ _update_ubuntu_cnpg_target | to_json }}, expected {{ case.expect | to_json }}"

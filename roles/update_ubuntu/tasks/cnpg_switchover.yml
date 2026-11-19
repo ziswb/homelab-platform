@@ -46,29 +46,8 @@
     kind: Node
   register: _update_ubuntu_cnpg_nodes
 
-- name: Pick a ready replica on another schedulable node for {{ _update_ubuntu_cnpg_namespace ~ '/' ~ _update_ubuntu_cnpg_cluster }}
-  ansible.builtin.set_fact:
-    _update_ubuntu_cnpg_target: >-
-      {%- set cordoned = _update_ubuntu_cnpg_nodes.resources
-            | selectattr('spec.unschedulable', 'defined')
-            | selectattr('spec.unschedulable')
-            | map(attribute='metadata.name') | list -%}
-      {%- set pick = namespace(name='') -%}
-      {%- for p in _update_ubuntu_cnpg_pods.resources
-            | selectattr('metadata.namespace', 'equalto', _update_ubuntu_cnpg_namespace)
-            | selectattr('metadata.labels', 'contains', 'cnpg.io/instanceRole') -%}
-        {%- if not pick.name
-              and p.metadata.labels['cnpg.io/cluster'] == _update_ubuntu_cnpg_cluster
-              and p.metadata.labels['cnpg.io/instanceRole'] == 'replica'
-              and p.spec.nodeName != update_ubuntu_k8s_node_name
-              and p.spec.nodeName not in cordoned
-              and (p.status.conditions | default([])
-                   | selectattr('type', 'equalto', 'Ready')
-                   | selectattr('status', 'equalto', 'True') | list) -%}
-          {%- set pick.name = p.metadata.name -%}
-        {%- endif -%}
-      {%- endfor -%}
-      {{ pick.name }}
+- name: Pick the switchover target for {{ _update_ubuntu_cnpg_namespace ~ '/' ~ _update_ubuntu_cnpg_cluster }}
+  ansible.builtin.import_tasks: cnpg_target.yml
   when: not (_update_ubuntu_cnpg_in_progress | bool)
 
 - name: Refuse to drain without a replica to take over
