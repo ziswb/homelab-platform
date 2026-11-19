@@ -43,9 +43,9 @@ move to Done; commits and the CHANGELOG cite them by it.
 
 14. **Unused k3s-ansible inputs.** `agent_group` (`k3s_server`, `prereq`),
     `server_group` and `k3s_server_location` (`k3s_agent`) are declared and
-    defaulted but never read. Remove them (decide whether that counts as a
-    major release under the SemVer rule) or say in the spec that they are
-    accepted for inventory compatibility only. Found in the 1.5.0 review.
+    defaulted but never read. Found in the 1.5.0 review. Decided 2026-11-19:
+    remove them; a removed input counts as a major release under the SemVer
+    rule, so this waits for 2.0.0.
 
 ## Done
 
