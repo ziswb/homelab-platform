@@ -25,3 +25,6 @@ here with its source, version and license when it is added.
   (https://github.com/prometheus-operator/prometheus-operator), Apache-2.0.
   roles/prometheus_operator/files/bundle.yaml: release bundle, namespace
   changed to monitoring.
+- kube-prometheus (https://github.com/prometheus-operator/kube-prometheus),
+  Apache-2.0. roles/kube_state_metrics/templates/: manifests based on its
+  kube-state-metrics component, templated (source version not recorded).
