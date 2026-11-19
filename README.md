@@ -8,10 +8,11 @@ Traefik and MetalLB for ingress, Prometheus Operator, Loki and Alloy for
 monitoring. It is opinionated, not a general-purpose library; the decisions
 behind it are documented as [ADRs](docs/adr/).
 
-> **Status:** 1.1: the k3s install, the nodes' trust in the private root CA,
-> the central host's Podman base and Loki, cert-manager with the private CA
-> chain, MetalLB and Traefik, the CloudNativePG operator, monitoring and log
-> shipping, node maintenance (24 roles). See [CHANGELOG](CHANGELOG.md).
+> **Status:** in production on the reference site: the k3s install, the nodes'
+> trust in the private root CA, the central host's Podman base and Loki,
+> cert-manager with the private CA chain, MetalLB and Traefik, the CloudNativePG
+> operator, monitoring and log shipping, node maintenance (24 roles). The current
+> release and what changed are in the [CHANGELOG](CHANGELOG.md).
 
 ## Supported
 
@@ -53,7 +54,7 @@ There is no Galaxy release; install a tagged version from git:
 collections:
   - name: https://github.com/ziswb/homelab-platform.git
     type: git
-    version: v1.0.0
+    version: v1.5.0   # the latest vX.Y.Z tag, see CHANGELOG.md
 ```
 
 ```bash
