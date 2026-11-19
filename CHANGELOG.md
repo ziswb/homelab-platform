@@ -6,6 +6,13 @@ release. Each release is a git tag `vX.Y.Z`.
 
 ## Unreleased
 
+- New `scripts/refresh-vendored.sh` (not part of the built collection): the
+  one way to replace vendored upstream YAML (ADR-0012), for MetalLB, the
+  prometheus-operator bundle, the system-upgrade-controller and Traefik's
+  CRDs. It also updates every place that names the version (NOTICE, and the
+  Traefik chart version) (docs/BACKLOG.md 2). Run at the vendored versions,
+  it reproduces the committed files byte for byte.
+
 ## 1.4.1
 
 - Fixed: `ssh_access`'s fresh login (1.3.0, 1.4.0) connected to the control

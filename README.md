@@ -95,6 +95,13 @@ With a Docker context other than the default socket (Rancher Desktop, Colima),
 set `DOCKER_HOST=$(docker context inspect --format '{{.Endpoints.docker.Host}}')`
 for Molecule.
 
+### Vendored manifests
+
+Upstream release YAML in `roles/*/files/` changes only through
+`scripts/refresh-vendored.sh <component> <version>` (ADR-0012): it downloads the
+release, makes the checked edits, writes the version header and updates NOTICE.
+Run without arguments for the component list.
+
 ## Security
 
 See [SECURITY.md](.github/SECURITY.md).

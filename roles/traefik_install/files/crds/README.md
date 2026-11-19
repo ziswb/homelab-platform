@@ -19,14 +19,12 @@ schema is always at least as new as the chart being installed.
 ## Re-vendoring (do this in the same commit as any chart version bump)
 
 ```bash
-helm repo add traefik https://traefik.github.io/charts && helm repo update traefik
-helm pull traefik/traefik --version <NEW> --untar --untardir /tmp/traefik-<NEW>
-rm roles/traefik_install/files/crds/*.yaml
-cp /tmp/traefik-<NEW>/traefik/crds/*.yaml roles/traefik_install/files/crds/
+scripts/refresh-vendored.sh traefik-crds <NEW>
 ```
 
-Then update the version above and `traefik_install_chart_version` (a refresh
-script is collection backlog 2).
+It replaces the CRDs with the chart's and sets the version above,
+`traefik_install_chart_version` (defaults, argument specs, role README) and
+NOTICE.
 
 There are **no local modifications** — keep it that way, so re-vendoring stays a
 plain copy and `diff` against the chart is the whole review.

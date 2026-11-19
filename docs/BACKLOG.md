@@ -7,13 +7,6 @@ side); what they find goes here.
 
 ## Open
 
-2. **No refresh script for vendored manifests.** ADR-0012 replaces vendored
-   release YAML only through a script that downloads the release and makes the
-   checked edits (`prometheus_operator`: namespace `monitoring`). The reference
-   site's script is not in the collection yet. Found in 0.3.0; 0.4.0 adds
-   `k3s_upgrader`'s system-upgrade-controller release (checked edit to the
-   Deployment); 1.1.0 `metallb`'s release manifest and `traefik_install`'s
-   CRDs (a verbatim copy from the chart, steps in its README).
 4. **No Molecule scenario for `update_ubuntu`.** P8 planned one for v1.0.0
    (without the health gate), but every step after the first needs a cluster:
    the gate, the node lookup by InternalIP, cordon/drain. Testing it needs the
@@ -21,6 +14,15 @@ side); what they find goes here.
    Found in 0.4.0.
 
 ## Done
+
+- **No refresh script for vendored manifests.** ADR-0012 replaces vendored
+  release YAML only through a script that downloads the release and makes the
+  checked edits (`prometheus_operator`: namespace `monitoring`). The reference
+  site's script is not in the collection yet. Found in 0.3.0; 0.4.0 adds
+  `k3s_upgrader`'s system-upgrade-controller release (checked edit to the
+  Deployment); 1.1.0 `metallb`'s release manifest and `traefik_install`'s
+  CRDs (a verbatim copy from the chart, steps in its README).
+  Done in the next release: `scripts/refresh-vendored.sh`.
 
 - **Post-update container smoke test in `central_podman`.** Decided
   2026-11-18 after the netavark 2 outage (0.4.1): package updates keep
