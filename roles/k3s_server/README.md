@@ -108,4 +108,7 @@ lists below.
   is an etcd voter before the next one goes.
 - Waiting for the control plane falls back to localhost when `api_endpoint`
   is down.
-- Check mode works (`--check --diff`).
+- Check mode works (`--check --diff`). On a server without k3s (new or
+  rebuilt) it skips the kubeconfig checks and copies, since nothing is
+  installed yet.
+- The fetched kubeconfig on the control node is set to 0600.

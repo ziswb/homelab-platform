@@ -68,13 +68,17 @@
         state: directory
         mode: "0755"
 
+    # no_log on every step that holds the token: set_fact prints its result
+    # at -v and on errors.
     - name: Start from the token and the inventory's server_config_yaml
+      no_log: true
       ansible.builtin.set_fact:
         k3s_server_config: "{{ {'token': token} | combine(server_config_yaml | default('{}') | from_yaml) }}"
 
     # tls-san as a list that always contains api_endpoint (the kubeconfig and
     # the agents reach the API through it).
     - name: Add api_endpoint to tls-san
+      no_log: true
       vars:
         _san: "{{ k3s_server_config['tls-san'] | default([]) }}"
       ansible.builtin.set_fact:
@@ -83,12 +87,14 @@
 
     - name: Start a new cluster on the bootstrap host
       when: inventory_hostname == k3s_server_bootstrap_host or ansible_host == k3s_server_bootstrap_host
+      no_log: true
       ansible.builtin.set_fact:
         k3s_server_config: "{{ k3s_server_config | combine({'cluster-init': true}) }}"
 
     # Established cluster: every server, the first included, joins.
     - name: Join through api_endpoint
       when: not (inventory_hostname == k3s_server_bootstrap_host or ansible_host == k3s_server_bootstrap_host)
+      no_log: true
       ansible.builtin.set_fact:
         k3s_server_config: "{{ k3s_server_config | combine({'server': 'https://' ~ api_endpoint ~ ':' ~ api_port}) }}"
 
@@ -260,8 +266,12 @@
         port: "{{ api_port }}"
         timeout: 60
 
+# In check mode on a server without k3s (new or rebuilt), nothing is
+# installed, so there is no k3s.yaml to verify, fetch or copy.
 - name: Fetch the kubeconfig from the first server
-  when: inventory_hostname == k3s_server_first or ansible_host == k3s_server_first
+  when:
+    - inventory_hostname == k3s_server_first or ansible_host == k3s_server_first
+    - not (ansible_check_mode and k3s_server_version_output.rc != 0)
   block:
     - name: Check whether kubectl is installed on control node
       # noqa var-naming[no-role-prefix]
@@ -310,6 +320,15 @@
             src: /etc/rancher/k3s/k3s.yaml
             dest: "{{ kubeconfig }}"
             flat: true
+
+        # fetch has no mode option; the file holds the cluster-admin key.
+        - name: Restrict the fetched kubeconfig to its owner
+          when: not ansible_check_mode
+          ansible.builtin.file:
+            path: "{{ kubeconfig }}"
+            mode: "0600"
+          delegate_to: 127.0.0.1
+          become: false
 
         - name: Change server address in kubeconfig on control node
           ansible.builtin.shell: |
@@ -383,8 +402,13 @@
           changed_when:
             - k3s_server_mv_result.rc == 0
 
+# Needs ansible_user (the user whose ~/.kube it fills), like the .bashrc
+# tasks above; skipped in check mode on a server without k3s (see the fetch).
 - name: Setup kubectl for user
-  when: user_kubectl
+  when:
+    - user_kubectl
+    - ansible_user is defined
+    - not (ansible_check_mode and k3s_server_version_output.rc != 0)
   block:
     # Same check as before the fetch, on every server: the
     # copy below is what `kubectl` on the node uses.

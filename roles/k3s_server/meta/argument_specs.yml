@@ -101,6 +101,7 @@ argument_specs:
         default: true
         description:
           - Copy the kubeconfig to C(ansible_user)'s C(~/.kube/config) on each server.
+          - Skipped when C(ansible_user) is not set.
       cluster_context:
         type: str
         default: k3s-ansible

@@ -13,6 +13,20 @@ release. Each release is a git tag `vX.Y.Z`.
   README and ADR-0013 describe. A server that just restarted k3s now holds
   the play until the settle time is over.
 
+- `k3s_server`: the tasks that build the server config (it holds the
+  cluster token) are `no_log`, so `-v` or an error no longer prints the
+  token. The kubeconfig fetched to the control node is set to 0600 (it holds
+  the cluster-admin key; it used to follow the control node's umask).
+
+- Fixed: `k3s_server` under `--check` failed on a server without k3s (new
+  or rebuilt): the kubeconfig checks waited a minute for a `k3s.yaml` that
+  only the skipped install would create. They and the copies after them are
+  now skipped there.
+- Fixed: `k3s_server` with `user_kubectl` (the default) failed with an
+  undefined `ansible_user` when the inventory does not set it, after k3s
+  had already restarted on the first server. The step is skipped then, like
+  the `.bashrc` lines before it.
+
 ## 1.5.0
 
 New optional feature; with its default nothing changes on the hosts.
