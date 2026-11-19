@@ -1,5 +1,5 @@
 ---
-# ADR-0009: copy each server node's etcd snapshots to the central server.
+# ADR-0009: copy each server node's etcd snapshots to the central host.
 # k3s itself is left on its defaults (00:00/12:00, 5 retained locally); this
 # role only reads what k3s has already written.
 

@@ -17,7 +17,8 @@ than one role reads.
   `group_vars` are templated lazily, only when a role reads the variable. Roles
   use secrets with `no_log: true`.
 - **Names:** `homelab_*` for the platform-wide variables below; `<role>_*` for a
-  role's own inputs. List-like inputs a site extends are `<role>_extra_*`;
+  role's own inputs; `k3s_*` for an input both k3s roles read (e.g.
+  `k3s_registry_mirrors`), apart from k3s-ansible's own names below. List-like inputs a site extends are `<role>_extra_*`;
   optional features are switched with `<role>_*_enabled`.
 - **Host names** are variables defaulting to `<service>.{{ homelab_domain }}`.
 - **Compatibility:** a new required variable, a renamed variable or a changed

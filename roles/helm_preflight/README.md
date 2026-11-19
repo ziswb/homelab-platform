@@ -7,7 +7,8 @@ Helm 4, that the helm-diff plugin is at least `helm_diff_version_min`. Without
 helm-diff, chart tasks still run but `--check` shows no diffs and `changed`
 is unreliable, so a missing plugin warns.
 
-No playbook: `cert_manager` and `cnpg_operator` (and a site's own Helm roles)
+No playbook: `cert_manager`, `cnpg_operator` and `traefik_install` (and a site's
+own Helm roles)
 list it as a meta dependency, `ziswb.homelab_platform.helm_preflight`.
 
 ## Variables

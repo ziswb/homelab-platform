@@ -64,7 +64,9 @@ comment, test-image bases by digest; Dependabot bumps all three weekly.
   hand.
 - Inventory groups `server`, `agent`, `central_server` are contract.
 - Every role ships `meta/argument_specs.yml` and a README; every role has a component
-  playbook `playbooks/<role>.yml` (`ziswb.homelab_platform.<role>`).
+  playbook `playbooks/<role>.yml` (`ziswb.homelab_platform.<role>`), except the
+  dependency-only roles `central_podman` and `helm_preflight` (meta dependencies of
+  other roles; their READMEs say so).
 - Customization is composition: list inputs `<role>_extra_*`, optional features
   `<role>_*_enabled`, no hooks. One owner per Kubernetes resource.
 - **No improvements while moving a role** in from `infrastructure`: the move must

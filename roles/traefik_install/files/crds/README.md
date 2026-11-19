@@ -6,7 +6,7 @@ Verbatim copy of `crds/` from the **traefik chart at the version pinned in
 ## Why these are vendored
 
 Helm applies a chart's `crds/` directory on **install only** — never on upgrade.
-So bumping `chart_version` moves the Deployment and leaves the CRDs behind, with
+So bumping `traefik_install_chart_version` moves the Deployment and leaves the CRDs behind, with
 no error and nothing to notice until a custom resource uses a field the stale
 schema rejects. That is not hypothetical: the reference cluster's CRDs, created at
 first install, were still generated from Traefik **v3.4** when the chart had
