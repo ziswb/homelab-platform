@@ -6,8 +6,17 @@ release. Each release is a git tag `vX.Y.Z`.
 
 ## Unreleased
 
-No deployed file changes.
+## 1.6.0
 
+No deployed file changes; applying it changes nothing on the hosts.
+
+- Tested: `update_ubuntu`'s health gate script is now a template
+  (`templates/cluster_health_gate.sh.j2`), still rendered and run inline on
+  each server. The Molecule scenario runs it against stub `systemctl`, `k3s`
+  and `journalctl`: every check fails the gate on its own (backlog 11).
+- Docs: the `k3s_version` example in `examples/inventory` and in
+  `k3s_server`'s argument spec is v1.36.5+k3s1, the tested version
+  (backlog 12).
 - Changed: the collection dependencies are bounded to the major CI tests:
   `community.general` 14.x, `ansible.posix` 2.x (were unbounded). ADR-0015
   records how dependencies are pinned.
