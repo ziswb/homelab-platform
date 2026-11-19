@@ -6,6 +6,10 @@ release. Each release is a git tag `vX.Y.Z`.
 
 ## Unreleased
 
+## 1.4.2
+
+No deployed file changes; applying it changes nothing on the hosts.
+
 - Fixed: `update_ubuntu` failed with "No first item, sequence was empty"
   when a host had no Kubernetes node with its address as InternalIP, instead
   of its own message naming the host and address (since 0.4.0). The
