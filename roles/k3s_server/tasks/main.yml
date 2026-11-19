@@ -321,15 +321,6 @@
             dest: "{{ kubeconfig }}"
             flat: true
 
-        # fetch has no mode option; the file holds the cluster-admin key.
-        - name: Restrict the fetched kubeconfig to its owner
-          when: not ansible_check_mode
-          ansible.builtin.file:
-            path: "{{ kubeconfig }}"
-            mode: "0600"
-          delegate_to: 127.0.0.1
-          become: false
-
         - name: Change server address in kubeconfig on control node
           ansible.builtin.shell: |
             KUBECONFIG={{ kubeconfig }} kubectl config set-cluster default --server=https://{{ api_endpoint }}:{{ api_port }}
@@ -401,6 +392,26 @@
           register: k3s_server_mv_result
           changed_when:
             - k3s_server_mv_result.rc == 0
+
+    # fetch has no mode option, and the file holds the cluster-admin key.
+    # On every run, not only after a new fetch: a file fetched by an
+    # earlier release kept the control node's umask.
+    - name: Look for the fetched kubeconfig on the control node
+      ansible.builtin.stat:
+        path: "{{ kubeconfig }}"
+      delegate_to: 127.0.0.1
+      become: false
+      register: k3s_server_fetched_stat
+      tags: kubeconfig
+
+    - name: Restrict the fetched kubeconfig to its owner
+      when: k3s_server_fetched_stat.stat.exists
+      ansible.builtin.file:
+        path: "{{ kubeconfig }}"
+        mode: "0600"
+      delegate_to: 127.0.0.1
+      become: false
+      tags: kubeconfig
 
 # Needs ansible_user (the user whose ~/.kube it fills), like the .bashrc
 # tasks above; skipped in check mode on a server without k3s (see the fetch).

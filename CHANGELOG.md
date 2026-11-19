@@ -8,8 +8,9 @@ release. Each release is a git tag `vX.Y.Z`.
 
 ## 1.5.1
 
-No deployed file changes; applying it changes nothing on the hosts. The
-next `update_ubuntu` run waits for every server's k3s settle time.
+No deployed file changes; applying it changes nothing on the hosts. On the
+control node, the first `k3s_server` run sets the fetched kubeconfig to 0600.
+The next `update_ubuntu` run waits for every server's k3s settle time.
 
 - Fixed: `update_ubuntu`'s health gate only enforced its last check (slow
   etcd warnings). The script had no `set -e`, so k3s being inactive, a k3s
@@ -17,10 +18,12 @@ next `update_ubuntu` run waits for every server's k3s settle time.
   failing `/readyz/etcd` passed the gate. Now every check must pass, as the
   README and ADR-0013 describe. A server that just restarted k3s now holds
   the play until the settle time is over.
-- `k3s_server`: the tasks that build the server config (it holds the
-  cluster token) are `no_log`, so `-v` or an error no longer prints the
-  token. The kubeconfig fetched to the control node is set to 0600 (it holds
-  the cluster-admin key; it used to follow the control node's umask).
+- Security (see [docs/SECURITY-FINDINGS.md](docs/SECURITY-FINDINGS.md)):
+  `k3s_server`'s tasks that build the server config (it holds the cluster
+  token) are `no_log`, so `-v` or an error no longer prints the token. The
+  kubeconfig fetched to the control node is set to 0600 on every run, also
+  when it was fetched by an earlier release (it holds the cluster-admin key;
+  it used to follow the control node's umask).
 - Fixed: `k3s_server` under `--check` failed on a server without k3s (new
   or rebuilt): the kubeconfig checks waited a minute for a `k3s.yaml` that
   only the skipped install would create. They and the copies after them are
