@@ -18,6 +18,12 @@ through `alloy`.
 
 ## Notes
 
+- **No authentication, no TLS, by design:** Loki publishes port 3100 on every
+  interface of the central host with `auth_enabled: false`. Whoever reaches the
+  port can read all logs, push log lines and file delete requests. This is
+  intended for a trusted LAN
+  ([ADR-0014](../../docs/adr/0014-service-exposure-lan-first.md), amendment);
+  otherwise restrict access at the network.
 - **SELinux:** the tree is labelled `container_file_t` by policy
   (`semanage fcontext`), not by `:Z`. A `:Z` mount gets new MCS categories on
   every container start and relabels the whole tree each time, which on a large

@@ -13,6 +13,12 @@ Traefik as the cluster's ingress (ADR-0014: every web UI is an IngressRoute on
 3. the dashboard on `https://<traefik_install_dashboard_host>/dashboard/`
    with a certificate from the `homelab-ca` ClusterIssuer.
 
+The dashboard and API have **no authentication, by design**: they are read-only
+but list every router, host name and backend, to anyone on the LAN. This is
+intended for a trusted LAN
+([ADR-0014](../../docs/adr/0014-service-exposure-lan-first.md), amendment);
+otherwise restrict access at the network.
+
 Needs `cert_manager` (the issuer) and `metallb` first; k3s's bundled Traefik
 must be off (`--disable traefik`). Depends on `helm_preflight`.
 
