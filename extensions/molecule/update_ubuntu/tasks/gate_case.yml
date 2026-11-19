@@ -1,0 +1,23 @@
+---
+# One run of the health gate script against the stubs in /opt/gate-stubs.
+- name: Run the health gate, {{ case.name }}
+  ansible.builtin.shell:
+    cmd: "{{ gate_script }}"
+    executable: /bin/bash
+  environment:
+    PATH: /opt/gate-stubs:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    STUB_ACTIVE: "{{ case.active | default(true) | ternary('1', '0') }}"
+    STUB_AGE: "{{ case.age | default(600) }}"
+    STUB_READYZ: "{{ case.readyz | default(true) | ternary('1', '0') }}"
+    STUB_SLOW: "{{ case.slow | default(0) }}"
+  register: gate_run
+  changed_when: false
+  failed_when: false
+
+- name: Check the outcome, {{ case.name }}
+  ansible.builtin.assert:
+    that: (gate_run.rc == 0) == case.passes
+    fail_msg: >-
+      expected the gate to {{ case.passes | ternary('pass', 'fail') }}, got rc
+      {{ gate_run.rc }}: {{ gate_run.stderr }}
+    quiet: true

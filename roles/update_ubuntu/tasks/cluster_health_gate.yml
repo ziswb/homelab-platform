@@ -9,19 +9,9 @@
 
 - name: Wait until k3s and etcd are healthy on every server
   ansible.builtin.shell:
-    cmd: |
-      # -e: every check below must pass, not only the last one
-      set -eo pipefail
-      # running, and for at least the settle time: k3s has come back on a
-      # server and exited again 4 minutes later
-      systemctl is-active --quiet k3s
-      since=$(systemctl show k3s -p ActiveEnterTimestamp --value)
-      test $(( $(date +%s) - $(date -d "$since" +%s) )) -ge {{ update_ubuntu_k3s_settle_seconds }}
-      # this server's own API reaches etcd
-      k3s kubectl get --raw /readyz/etcd >/dev/null
-      # etcd not slow: a healthy server logs ~0 of these a minute
-      slow=$(journalctl -u k3s --since "-60s" --no-pager -o cat | grep -cE 'took too long|deadline exceeded' || true)
-      test "$slow" -le {{ update_ubuntu_etcd_slow_warnings_max }}
+    # The script is a template so that Molecule can test it (update_ubuntu
+    # scenario); it runs inline, nothing is copied to the node.
+    cmd: "{{ lookup('ansible.builtin.template', 'cluster_health_gate.sh.j2') }}"
     executable: /bin/bash
   delegate_to: "{{ item }}"
   become: true

@@ -69,3 +69,68 @@
       loop_control:
         loop_var: case
         label: "{{ case.name }}"
+
+    # The health gate script (roles/update_ubuntu/templates), rendered with the
+    # role's defaults (settle 120 s, at most 1 slow etcd line), against stub
+    # systemctl, k3s and journalctl. Every check must fail the gate on its own:
+    # before 1.5.1 only the last one did.
+    - name: Load the role's defaults for the gate
+      ansible.builtin.include_vars:
+        file: "{{ playbook_dir }}/../../../roles/update_ubuntu/defaults/main.yml"
+
+    - name: Render the gate script
+      ansible.builtin.set_fact:
+        gate_script: >-
+          {{ lookup('ansible.builtin.template',
+                    playbook_dir ~ '/../../../roles/update_ubuntu/templates/cluster_health_gate.sh.j2') }}
+
+    - name: Create the stub directory
+      ansible.builtin.file:
+        path: /opt/gate-stubs
+        state: directory
+        mode: "0755"
+
+    # STUB_ACTIVE: k3s active (1/0); STUB_AGE: seconds since k3s started;
+    # STUB_READYZ: /readyz/etcd answers (1/0); STUB_SLOW: slow etcd lines in
+    # the last minute.
+    - name: Install the stub commands
+      ansible.builtin.copy:
+        dest: "/opt/gate-stubs/{{ item.key }}"
+        mode: "0755"
+        content: "{{ item.value }}"
+      loop: "{{ stubs | dict2items }}"
+      loop_control:
+        label: "{{ item.key }}"
+      vars:
+        stubs:
+          systemctl: |
+            #!/bin/bash
+            case "$1" in
+              is-active) [ "$STUB_ACTIVE" = 1 ] ;;
+              show) date -d "@$(( $(date +%s) - STUB_AGE ))" '+%a %Y-%m-%d %H:%M:%S %Z' ;;
+              *) exit 2 ;;
+            esac
+          k3s: |
+            #!/bin/bash
+            [ "$*" = "kubectl get --raw /readyz/etcd" ] || exit 2
+            [ "$STUB_READYZ" = 1 ] && echo ok
+          journalctl: |
+            #!/bin/bash
+            echo "level=info msg=\"a normal line\""
+            for _ in $(seq 1 "$STUB_SLOW"); do
+              echo "level=warn msg=\"apply request took too long\""
+            done
+
+    - name: Health gate cases
+      ansible.builtin.include_tasks: tasks/gate_case.yml
+      loop:
+        - {name: healthy, passes: true}
+        - {name: k3s inactive, active: false, passes: false}
+        - {name: k3s up shorter than the settle time, age: 30, passes: false}
+        - {name: k3s up exactly the settle time, age: 120, passes: true}
+        - {name: /readyz/etcd fails, readyz: false, passes: false}
+        - {name: one slow etcd line (the maximum), slow: 1, passes: true}
+        - {name: two slow etcd lines, slow: 2, passes: false}
+      loop_control:
+        loop_var: case
+        label: "{{ case.name }}"

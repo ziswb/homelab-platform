@@ -90,7 +90,7 @@ reference site.
 | [k3s_agent](roles/k3s_agent/) | k3s agent; optional registry mirrors | registry mirrors only |
 | [k3s_etcd_snapshot_offload](roles/k3s_etcd_snapshot_offload/) | Copies the servers' etcd snapshots to an NFS export on the central host |  |
 | [homelab_root_ca_trust](roles/homelab_root_ca_trust/) | The nodes trust the private root CA (ADR-0007) | yes |
-| [update_ubuntu](roles/update_ubuntu/) | Package upgrades, one node at a time, behind a cluster health gate | lookup logic only |
+| [update_ubuntu](roles/update_ubuntu/) | Package upgrades, one node at a time, behind a cluster health gate | lookup logic, health gate script |
 | [ssh_access](roles/ssh_access/) | SSH login by public key only, for one user (also on the central host) | yes |
 | **Cluster** (from the control node, through the kubeconfig) | | |
 | [k3s_upgrader](roles/k3s_upgrader/) | k3s upgrades by the system-upgrade-controller (ADR-0010) |  |

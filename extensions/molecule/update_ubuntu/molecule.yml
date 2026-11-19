@@ -1,11 +1,12 @@
 ---
-# update_ubuntu needs a cluster for everything but its lookup logic, and its
-# node steps connect over SSH (docs/BACKLOG.md 4). This scenario tests the
-# logic only: the node lookup by InternalIP (tasks/node_name.yml) and the
-# choice of the CloudNativePG switchover target (tasks/cnpg_target.yml), on
-# fixture k8s_info results. Both are set_fact tasks that run on the control
-# node; the container is there because Molecule needs a platform. The checks
-# run in converge (facts do not carry over to a separate verify run).
+# update_ubuntu needs a cluster for everything but its logic, and its node
+# steps connect over SSH (docs/BACKLOG.md 4). This scenario tests the logic
+# only: the node lookup by InternalIP (tasks/node_name.yml) and the choice of
+# the CloudNativePG switchover target (tasks/cnpg_target.yml) on fixture
+# k8s_info results, and the health gate script
+# (templates/cluster_health_gate.sh.j2) in the container against stub
+# systemctl, k3s and journalctl. The checks run in converge (facts do not
+# carry over to a separate verify run).
 driver:
   name: docker
 platforms:
