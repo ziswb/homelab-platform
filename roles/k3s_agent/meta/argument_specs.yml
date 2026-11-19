@@ -56,6 +56,15 @@ argument_specs:
         required: false
         description:
           - Lines added to C(k3s-agent.service.env).
+      k3s_registry_mirrors:
+        type: dict
+        default: {}
+        description:
+          - >-
+            Registry mirrors for containerd: written as the C(mirrors) key of C(/etc/rancher/k3s/registries.yaml)
+            (keys are upstream registries, values k3s mirror entries with C(endpoint) and optional C(rewrite)).
+            k3s restarts when the file changes. Empty writes no file and leaves an existing one alone.
+            Same variable for servers and agents. See the README of C(k3s_server), "Registry mirrors".
       systemd_dir:
         type: str
         default: /etc/systemd/system

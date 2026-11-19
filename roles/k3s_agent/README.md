@@ -12,8 +12,9 @@ Playbooks: `ziswb.homelab_platform.k3s_cluster` or
 
 Required: `token` (secret), `api_endpoint`, `k3s_version` (k3s-ansible's
 names). Optional: `agent_config_yaml`, `extra_agent_args`, `extra_service_envs`,
-`extra_install_envs`, `api_port`, `k3s_agent_config_mode` (`0600`); see
-`meta/argument_specs.yml`.
+`extra_install_envs`, `api_port`, `k3s_agent_config_mode` (`0600`),
+`k3s_registry_mirrors` (same as on the servers, see "Registry mirrors" in
+`k3s_server`'s README); see `meta/argument_specs.yml`.
 
 The token and `agent_config_yaml` go to `/etc/rancher/k3s/config.yaml` (mode
 0600), as on the servers; upstream writes the token to

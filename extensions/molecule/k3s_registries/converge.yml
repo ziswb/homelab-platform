@@ -1,0 +1,57 @@
+---
+- name: Converge
+  hosts: all
+  gather_facts: false
+  vars:
+    mirrors:
+      docker.io:
+        endpoint: ["https://registry.example.com"]
+        rewrite:
+          "^(.*)$": "docker.io/$1"
+      quay.io:
+        endpoint: ["https://registry.example.com"]
+        rewrite:
+          "^(.*)$": "quay.io/$1"
+  tasks:
+    # Both roles create it before the registries tasks.
+    - name: Create the k3s config directory
+      ansible.builtin.file:
+        path: /etc/rancher/k3s
+        state: directory
+        mode: "0755"
+
+    - name: Put a hand-made registries.yaml on the agent node
+      when: inventory_hostname == 'agent-node'
+      ansible.builtin.copy:
+        content: "# written by hand\n"
+        dest: /etc/rancher/k3s/registries.yaml
+        mode: "0644"
+        force: false
+
+    - name: Write the mirrors with k3s_server
+      when: inventory_hostname == 'server-node'
+      ansible.builtin.include_role:
+        name: ziswb.homelab_platform.k3s_server
+        tasks_from: registries
+      vars:
+        k3s_registry_mirrors: "{{ mirrors }}"
+
+    - name: Write the same mirrors with k3s_agent
+      when: inventory_hostname == 'server-node'
+      ansible.builtin.include_role:
+        name: ziswb.homelab_platform.k3s_agent
+        tasks_from: registries
+      vars:
+        k3s_registry_mirrors: "{{ mirrors }}"
+
+    - name: Assert that both roles render the same file
+      when: inventory_hostname == 'server-node'
+      ansible.builtin.assert:
+        that: not k3s_agent_registries_result.changed
+        fail_msg: k3s_agent rewrote the file k3s_server wrote; the two renderings differ.
+
+    - name: Run k3s_agent with no mirrors
+      when: inventory_hostname == 'agent-node'
+      ansible.builtin.include_role:
+        name: ziswb.homelab_platform.k3s_agent
+        tasks_from: registries

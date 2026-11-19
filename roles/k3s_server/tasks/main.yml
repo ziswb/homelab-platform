@@ -161,6 +161,9 @@
   no_log: true # holds the token
   register: k3s_server_config_result
 
+- name: Write the registry mirrors
+  ansible.builtin.import_tasks: registries.yml
+
 # Local addition. The k3s CLI (kubectl on the nodes is a link to it) reads
 # /etc/rancher/k3s/config.yaml on every call; it is 0600 here, so in the user's
 # shell every call warned and `k3s completion` aborted. The user's kubectl uses
@@ -187,13 +190,14 @@
 
 # Restart only when something changed (local deviation: upstream restarts on
 # every run). serial: 1 in the play keeps it to one server at a time.
-- name: Restart K3s when its config, unit or binary changed
+- name: Restart K3s when its config, registries, unit or binary changed
   when:
     - not ansible_check_mode
     - ansible_facts.services['k3s.service'] is defined
     - ansible_facts.services['k3s.service'].state == 'running'
     - >-
       k3s_server_config_result.changed
+      or (k3s_server_registries_result.changed | default(false))
       or skip_download | default('true') == 'false'
       or (k3s_server_unit_before.results | map(attribute='stat.checksum', default='')
           | list) != (k3s_server_unit_after.results | map(attribute='stat.checksum', default='') | list)

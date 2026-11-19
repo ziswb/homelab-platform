@@ -1,0 +1,34 @@
+---
+- name: Verify
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Read registries.yaml
+      ansible.builtin.slurp:
+        path: /etc/rancher/k3s/registries.yaml
+      register: registries
+
+    - name: Stat registries.yaml
+      ansible.builtin.stat:
+        path: /etc/rancher/k3s/registries.yaml
+      register: registries_stat
+
+    - name: Assert the mirrors on the server node
+      when: inventory_hostname == 'server-node'
+      vars:
+        content: "{{ registries.content | b64decode | from_yaml }}"
+      ansible.builtin.assert:
+        that:
+          - content.keys() | list == ['mirrors']
+          - content.mirrors['docker.io'].endpoint == ['https://registry.example.com']
+          - content.mirrors['docker.io'].rewrite['^(.*)$'] == 'docker.io/$1'
+          - content.mirrors['quay.io'].rewrite['^(.*)$'] == 'quay.io/$1'
+          - registries_stat.stat.mode == '0600'
+          - registries_stat.stat.pw_name == 'root'
+
+    - name: Assert the hand-made file on the agent node is untouched
+      when: inventory_hostname == 'agent-node'
+      ansible.builtin.assert:
+        that:
+          - registries.content | b64decode == "# written by hand\n"
+          - registries_stat.stat.mode == '0644'

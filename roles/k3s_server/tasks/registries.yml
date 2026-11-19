@@ -1,0 +1,14 @@
+---
+# /etc/rancher/k3s/registries.yaml from k3s_registry_mirrors (README "Registry
+# mirrors" in roles/k3s_server). k3s reads it only at start, so a change
+# restarts k3s (tasks/main.yml). Empty (the default) leaves the path alone:
+# no file is written, and one written by hand is neither changed nor removed.
+- name: Write the registry mirrors to registries.yaml
+  when: k3s_registry_mirrors | length > 0
+  ansible.builtin.copy:
+    content: "{{ {'mirrors': k3s_registry_mirrors} | to_nice_yaml(indent=2) }}"
+    dest: /etc/rancher/k3s/registries.yaml
+    owner: root
+    group: root
+    mode: "0600"
+  register: k3s_server_registries_result

@@ -56,6 +56,7 @@ names, so an inventory written for it works here. The shared ones:
 | `k3s_version` | str | yes | `k3s_server`, `k3s_agent` | k3s version a new node gets; upgrades are `k3s_upgrader`'s job. |
 | `api_port` | int | no (6443) | `prereq`, `k3s_server`, `k3s_agent` | Port of the Kubernetes API. |
 | `server_config_yaml` | str | no | `prereq`, `k3s_server` | Extra k3s server config (YAML text). |
+| `k3s_registry_mirrors` | dict | no (`{}`) | `k3s_server`, `k3s_agent` | containerd registry mirrors, written to `registries.yaml` (not a k3s-ansible name; `k3s_server` README "Registry mirrors"). |
 
 Rows are added with the roles that read them; each role move decides the
 public form of the variables it needs.

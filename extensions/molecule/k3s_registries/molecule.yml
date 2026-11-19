@@ -1,0 +1,48 @@
+---
+# registries.yaml from k3s_registry_mirrors (tasks/registries.yml of k3s_server
+# and k3s_agent): server-node gets mirrors from both roles (the same file, the
+# second write is a no-op), agent-node has a hand-made file and empty mirrors
+# (left alone). The rest of the k3s roles needs a cluster and is not run here.
+driver:
+  name: docker
+platforms:
+  - name: server-node
+    image: homelab-platform-test/ubuntu2404:local
+    pre_build_image: true
+    # Keep the image's CMD (systemd as PID 1); the driver's default is a sleep loop.
+    override_command: false
+    privileged: true
+    cgroupns_mode: host
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    tmpfs:
+      - /run
+      - /tmp
+    groups:
+      - server
+  - name: agent-node
+    image: homelab-platform-test/ubuntu2404:local
+    pre_build_image: true
+    override_command: false
+    privileged: true
+    cgroupns_mode: host
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    tmpfs:
+      - /run
+      - /tmp
+    groups:
+      - agent
+provisioner:
+  name: ansible
+# No dependency install into ~/.ansible before a run: the collections come from
+# ANSIBLE_COLLECTIONS_PATH (CI and the README's local steps install them).
+prerun: false
+scenario:
+  test_sequence:
+    - destroy
+    - create
+    - converge
+    - idempotence
+    - verify
+    - destroy

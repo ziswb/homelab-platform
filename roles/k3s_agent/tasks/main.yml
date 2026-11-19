@@ -87,6 +87,9 @@
       no_log: true # holds the token
       register: k3s_agent_config_result
 
+- name: Write the registry mirrors
+  ansible.builtin.import_tasks: registries.yml
+
 - name: Add service environment variables
   when: extra_service_envs is defined
   ansible.builtin.lineinfile:
@@ -107,13 +110,14 @@
 
 # Restart only when something changed (local deviation: upstream restarts on
 # every run). Restarting k3s-agent leaves the running pods alone.
-- name: Restart K3s agent when its config, unit or binary changed
+- name: Restart K3s agent when its config, registries, unit or binary changed
   when:
     - not ansible_check_mode
     - ansible_facts.services['k3s-agent.service'] is defined
     - ansible_facts.services['k3s-agent.service'].state == 'running'
     - >-
       (k3s_agent_config_result.changed | default(false))
+      or (k3s_agent_registries_result.changed | default(false))
       or skip_download | default('true') == 'false'
       or (k3s_agent_unit_before.results | map(attribute='stat.checksum', default='')
           | list) != (k3s_agent_unit_after.results | map(attribute='stat.checksum', default='') | list)

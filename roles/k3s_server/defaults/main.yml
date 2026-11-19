@@ -23,3 +23,8 @@ agent_group: agent  # noqa var-naming[no-role-prefix]
 k3s_server_bootstrap_host: ""
 extra_server_args: "" # noqa var-naming[no-role-prefix]
 extra_install_envs: {} # noqa var-naming[no-role-prefix]
+
+# Registry mirrors for containerd, written to /etc/rancher/k3s/registries.yaml
+# as its `mirrors` key (README "Registry mirrors" in roles/k3s_server). Shared
+# by k3s_server and k3s_agent. Empty: no file is written.
+k3s_registry_mirrors: {}  # noqa var-naming[no-role-prefix]

@@ -7,3 +7,8 @@ systemd_dir: "/etc/systemd/system"  # noqa var-naming[no-role-prefix]
 api_port: 6443  # noqa var-naming[no-role-prefix]
 extra_agent_args: "" # noqa var-naming[no-role-prefix]
 extra_install_envs: {} # noqa var-naming[no-role-prefix]
+
+# Registry mirrors for containerd, written to /etc/rancher/k3s/registries.yaml
+# as its `mirrors` key (README "Registry mirrors" in roles/k3s_server). Shared
+# by k3s_server and k3s_agent. Empty: no file is written.
+k3s_registry_mirrors: {}  # noqa var-naming[no-role-prefix]

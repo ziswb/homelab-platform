@@ -16,6 +16,38 @@ inputs and defaults are in `meta/argument_specs.yml`; the most used are
 `server_config_yaml` (extra k3s config as YAML text), `extra_server_args` and
 `cluster_context`.
 
+## Registry mirrors
+
+`k3s_registry_mirrors` (servers and agents, default `{}`) becomes the `mirrors`
+key of `/etc/rancher/k3s/registries.yaml`, in
+[k3s's format](https://docs.k3s.io/installation/private-registry): upstream
+registry as key, `endpoint` and optional `rewrite` as value. Typical use: one
+pull-through cache that mirrors several upstreams under a path prefix each.
+
+```yaml
+k3s_registry_mirrors:
+  docker.io:
+    endpoint: ["https://<registry-host>"]
+    rewrite:
+      "^(.*)$": "docker.io/$1"
+  quay.io:
+    endpoint: ["https://<registry-host>"]
+    rewrite:
+      "^(.*)$": "quay.io/$1"
+```
+
+- containerd tries the mirror first and falls back to the upstream itself when
+  the mirror fails or answers 404, so a cache that is down or still fetching
+  does not stop a pull. Setting `disable-default-endpoint` in
+  `server_config_yaml`/`agent_config_yaml` turns that fallback off.
+- k3s reads the file only at start: the role restarts k3s (agents: k3s-agent)
+  when it changes, one server at a time as for any config change.
+- Only `mirrors`: no `configs` (credentials, client certificates). A mirror with
+  a private CA needs that CA in the node's system trust store before k3s starts
+  (`homelab_root_ca_trust`).
+- Empty writes nothing and leaves an existing file alone. To drop mirrors the
+  role wrote, delete the file and restart k3s on each node.
+
 ## Trimmed copy of k3s-ansible
 
 `prereq`, `k3s_server` and `k3s_agent` come from
@@ -36,7 +68,8 @@ lists below.
 - The randomly generated token: `token` is required.
 - `k3s_upgrade` and `playbooks/upgrade.yml`: upgrades are the
   system-upgrade-controller's job (`k3s_upgrader`, ADR-0010).
-- `extra_manifests`, `registries_config_yaml`.
+- `extra_manifests`, and `registries_config_yaml` (raw text): replaced by
+  `k3s_registry_mirrors` (see "Registry mirrors").
 
 ### Deviations from upstream
 
