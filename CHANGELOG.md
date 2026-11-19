@@ -12,7 +12,7 @@ New optional feature; with its default nothing changes on the hosts.
 
 - New `k3s_registry_mirrors` (`k3s_server`, `k3s_agent`, default `{}`):
   containerd registry mirrors, written as the `mirrors` key of
-  `/etc/rancher/k3s/registries.yaml` (PLAN P14). k3s restarts when the file
+  `/etc/rancher/k3s/registries.yaml`. k3s restarts when the file
   changes (servers one at a time). Empty writes no file and leaves an
   existing one alone. containerd keeps the upstream as fallback, so a mirror
   that is down or answers 404 does not stop a pull. README "Registry
@@ -214,7 +214,7 @@ repository: the central host.
   podman does not create `/etc/containers/containers.conf.d`.
 - Molecule scenario for `central_podman` (Rocky Linux 10).
 
-## 0.1.0
+## 0.1.0 (not tagged)
 
 - Collection skeleton: metadata, leak guard, CI (lint, structure, syntax check,
   Molecule), example inventory, variable vocabulary and bring-up order docs.
