@@ -1,5 +1,5 @@
 # Molecule test image for the k3s node roles: Ubuntu 24.04 with systemd as PID 1.
-FROM docker.io/library/ubuntu:24.04@sha256:73b999393d07f2bf65a40373778a44dc9a6d54ad7718d29247d8ff9413c4d6a8
+FROM docker.io/library/ubuntu:24.04@sha256:9c7f200c07e3d4a03e7249d2c16bf66a51120fb876aa2242cf31451412543289
 
 ENV container=docker \
     DEBIAN_FRONTEND=noninteractive
