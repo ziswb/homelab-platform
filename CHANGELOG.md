@@ -6,6 +6,19 @@ release. Each release is a git tag `vX.Y.Z`.
 
 ## Unreleased
 
+## 1.7.0
+
+Deployed files change only where `alloy_extra_log_files` is set; with its
+default, applying it changes nothing on the hosts. The first signed tag.
+
+- Added: `alloy` takes `alloy_extra_log_files` (default `[]`), log files on the
+  node to ship besides the pod logs, each `{path, job}`, e.g. the API server's
+  audit log. With the default the rendered manifests are unchanged.
+- Added: `scripts/sign-release.sh vX.Y.Z`: checks a release (clean tree, on
+  `main`, version and CHANGELOG, vendored files reproduced byte for byte by
+  `refresh-vendored.sh`, the diff since the last signed tag) and signs its
+  tag. From this release on, tags are signed (ADR-0004, amended).
+
 ## 1.6.0
 
 No deployed file changes; applying it changes nothing on the hosts.
