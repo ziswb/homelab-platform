@@ -1,6 +1,7 @@
 # 0004 — Releases are git tags; SemVer follows the argument specs
 
-- Status: accepted 2026-11-17
+- Status: accepted 2026-11-17. **Amended 2026-11-25:** release tags are
+  signed by the maintainer, after `scripts/sign-release.sh` has checked them.
 - Date: 2026-11-17
 
 ## Context
@@ -31,3 +32,18 @@ with one known consumer so far.
   pinning the previous tag.
 - Breaking changes are visible in the version number and the changelog.
 - No Galaxy discovery; adding Galaxy later is an upload step, not a redesign.
+
+## Amendment 2026-11-25: signed tags
+
+A consuming site may apply releases unattended, with its own credentials, and
+accept only tags signed by the maintainer. A tag is then the step where the
+maintainer vouches for the release, so it is signed (`git tag -s`, an SSH
+signing key) and never set by CI, and the signature is only given after a
+check: `scripts/sign-release.sh vX.Y.Z` refuses a dirty tree, a commit not on
+`main`, a mismatched `galaxy.yml` or missing CHANGELOG section; reproduces
+every vendored file at the version its header names with
+`scripts/refresh-vendored.sh` and refuses one that differs; and shows the
+full diff since the last signed tag for anything beyond vendored files,
+NOTICE, the changelog and version lines, which must be confirmed by typing
+the version. Tags before v1.7.0 are unsigned.
+
