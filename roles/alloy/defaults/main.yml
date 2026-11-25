@@ -1,0 +1,6 @@
+---
+# Log files on the node to ship besides the pod logs, e.g. the API server's
+# audit log on the control-plane nodes. Each: path (a file glob on the host),
+# job (the `job` label in Loki). Their directory is mounted read-only; on a
+# node without it the directory is created empty and nothing is shipped.
+alloy_extra_log_files: []

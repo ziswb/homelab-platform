@@ -11,3 +11,20 @@ argument_specs:
         required: true
         description:
           - Base URL of Loki, without the API path, e.g. C(http://loki.example.com:3100) (C(central_loki) listens on port 3100).
+      alloy_extra_log_files:
+        type: list
+        elements: dict
+        default: []
+        description:
+          - Log files on the node to ship besides the pod logs, e.g. the API server's audit log on control-plane nodes.
+          - Each file's directory is mounted read-only; a node without it gets the directory created empty.
+          - Lines are shipped as they are, labelled with C(job) and C(node).
+        options:
+          path:
+            type: str
+            required: true
+            description: Absolute file path on the node; the file name may be a glob (C(*.log)).
+          job:
+            type: str
+            required: true
+            description: The C(job) label in Loki.

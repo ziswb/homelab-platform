@@ -59,6 +59,11 @@ spec:
               readOnly: true
             - name: data
               mountPath: /var/lib/alloy/data
+{% for d in alloy_extra_log_files | map(attribute='path') | map('dirname') | unique %}
+            - name: extra-{{ loop.index }}
+              mountPath: {{ d }}
+              readOnly: true
+{% endfor %}
       volumes:
         - name: config
           configMap:
@@ -69,3 +74,9 @@ spec:
         - name: data
           hostPath:
             path: /var/lib/alloy/data
+{% for d in alloy_extra_log_files | map(attribute='path') | map('dirname') | unique %}
+        - name: extra-{{ loop.index }}
+          hostPath:
+            path: {{ d }}
+            type: DirectoryOrCreate
+{% endfor %}

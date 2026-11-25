@@ -47,6 +47,29 @@ data:
       forward_to = [loki.write.default.receiver]
     }
 
+{% for f in alloy_extra_log_files %}
+    local.file_match "extra_{{ loop.index }}" {
+      path_targets = [{"__path__" = "{{ f.path }}"}]
+      sync_period  = "10s"
+    }
+
+    loki.source.file "extra_{{ loop.index }}" {
+      targets    = local.file_match.extra_{{ loop.index }}.targets
+      forward_to = [loki.process.extra_{{ loop.index }}.receiver]
+    }
+
+    loki.process "extra_{{ loop.index }}" {
+      stage.static_labels {
+        values = {
+          job  = "{{ f.job }}",
+          node = sys.env("NODE_NAME"),
+        }
+      }
+
+      forward_to = [loki.write.default.receiver]
+    }
+
+{% endfor %}
     loki.write "default" {
       endpoint {
         url = "{{ homelab_loki_url }}/loki/api/v1/push"
