@@ -6,6 +6,8 @@ release. Each release is a git tag `vX.Y.Z`.
 
 ## Unreleased
 
+## 1.7.1
+
 No deployed file changes; applying it changes nothing on the hosts.
 
 - Added: Renovate (`renovate.json5`, ADR-0016) opens a PR per upstream update of
