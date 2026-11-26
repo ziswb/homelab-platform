@@ -6,6 +6,13 @@ release. Each release is a git tag `vX.Y.Z`.
 
 ## Unreleased
 
+## 1.7.2
+
+Dependency updates, prepared by CI from the merged Renovate PRs (ADR-0016).
+
+- Updated: Update dependency rancher/system-upgrade-controller to v0.21.1 (#4)
+- Updated: Update docker.io/grafana/loki Docker tag to v3.7.10 (#5)
+
 ## 1.7.1
 
 No deployed file changes; applying it changes nothing on the hosts.
