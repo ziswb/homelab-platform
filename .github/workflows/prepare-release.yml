@@ -1,0 +1,35 @@
+---
+# After a merge to main: prepare a release PR from the merged Renovate PRs
+# (scripts/prepare-release.sh, ADR-0016). It never tags; the maintainer signs
+# the tag with scripts/sign-release.sh (ADR-0004).
+name: Prepare release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Prepare the release PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/prepare-release.sh

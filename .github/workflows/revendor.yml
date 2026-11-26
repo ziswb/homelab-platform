@@ -1,0 +1,53 @@
+---
+# A Renovate PR that bumps a vendored component changes only its version; this
+# rewrites the component on the PR with scripts/refresh-vendored.sh
+# (scripts/revendor-pr.sh, ADR-0016), so the review sees the upstream diff.
+#
+# pull_request_target: the workflow and the scripts come from main, never from
+# the PR; revendor-pr.sh refuses a PR that changes anything beyond the paths
+# re-vendoring writes. A push with GITHUB_TOKEN starts no workflow, so CI and
+# Gitleaks are dispatched on the PR branch afterwards (their checks then sit
+# on the pushed commit).
+name: Re-vendor
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  revendor:
+    if: >-
+      github.event.pull_request.user.login == 'renovate[bot]'
+      && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 0
+      - name: Re-vendor the bumped components
+        id: revendor
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: scripts/revendor-pr.sh "$BASE_SHA" "$HEAD_REF" "$HEAD_SHA"
+      - name: Run CI and Gitleaks on the pushed commit
+        if: steps.revendor.outputs.pushed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          gh workflow run ci.yml --ref "$HEAD_REF"
+          gh workflow run gitleaks.yml --ref "$HEAD_REF"

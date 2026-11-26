@@ -47,3 +47,6 @@ full diff since the last signed tag for anything beyond vendored files,
 NOTICE, the changelog and version lines, which must be confirmed by typing
 the version. Tags before v1.7.0 are unsigned.
 
+Since 2026-11-26 CI may prepare a routine release as a PR (ADR-0016); the
+tag stays the maintainer's, signed as above.
+

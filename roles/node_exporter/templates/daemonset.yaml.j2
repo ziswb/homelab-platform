@@ -37,6 +37,7 @@ spec:
             # Textfile metrics a site writes on the nodes (e.g. disk health);
             # an empty or missing directory is fine.
             - --collector.textfile.directory=/host/root/var/lib/node-exporter-textfile
+{# renovate: datasource=docker depName=quay.io/prometheus/node-exporter #}
           image: quay.io/prometheus/node-exporter:v1.12.1
           name: node-exporter
           resources:
@@ -65,6 +66,7 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: status.podIP
+{# renovate: datasource=docker depName=quay.io/brancz/kube-rbac-proxy #}
           image: quay.io/brancz/kube-rbac-proxy:v0.23.1
           name: kube-rbac-proxy
           ports:

@@ -22,6 +22,7 @@ spec:
           effect: NoSchedule
       containers:
         - name: alloy
+{# renovate: datasource=docker depName=grafana/alloy #}
           image: grafana/alloy:v1.21.3
           securityContext:
             runAsUser: 0

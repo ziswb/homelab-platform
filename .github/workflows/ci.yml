@@ -9,6 +9,9 @@ on:
   push:
     branches: [main]
   pull_request:
+  # Dispatched by revendor.yml and prepare-release.yml on a branch they
+  # pushed with GITHUB_TOKEN, which starts no workflow by itself (ADR-0016).
+  workflow_dispatch:
 
 permissions:
   contents: read
