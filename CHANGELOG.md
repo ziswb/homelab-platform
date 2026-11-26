@@ -6,6 +6,17 @@ release. Each release is a git tag `vX.Y.Z`.
 
 ## Unreleased
 
+## 1.7.3
+
+No deployed file changes; applying it changes nothing on the hosts.
+
+- Fixed: the commits `revendor.yml` and `prepare-release.yml` push run CI and
+  Gitleaks on their PR by themselves; the extra dispatched runs are gone. This
+  needs the repository's approval policy for outside contributors at
+  first-time contributors (ADR-0016, amended).
+- Fixed: the release PR updates the README's install example to the new tag,
+  and its CHANGELOG lines no longer read "Updated: Update …".
+
 ## 1.7.2
 
 Dependency updates, prepared by CI from the merged Renovate PRs (ADR-0016).

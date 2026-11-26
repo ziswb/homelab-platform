@@ -8,7 +8,7 @@ on:
   push:
     branches: ["**"]
   pull_request:
-  # Dispatched on branches pushed with GITHUB_TOKEN (ADR-0016).
+  # By hand, e.g. to rerun the scan on a branch.
   workflow_dispatch:
 
 permissions:

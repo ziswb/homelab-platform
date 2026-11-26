@@ -52,9 +52,14 @@ or a vendored file's header.
   release as before.
 - Any other commit since the last tag (a fix, a feature, Unreleased notes)
   means the maintainer releases by hand, as before.
-- Branches pushed with `GITHUB_TOKEN` start no workflow, so both workflows
-  dispatch `ci.yml` and `gitleaks.yml` on the branch they pushed: the required
-  checks then run on that commit.
+- A commit either workflow pushes with `GITHUB_TOKEN` runs CI and Gitleaks
+  on its PR like any other (`pull_request`). GitHub counts its author,
+  `github-actions[bot]`, as an outside contributor: with the approval policy
+  at *all outside contributors* those runs wait for an approval, and the PR
+  stays blocked even with the required checks passed from a dispatched run.
+  The policy is *first-time contributors* (amended 2026-11-26; the first
+  version dispatched the checks instead, on the assumption that such a push
+  starts no workflow).
 
 ## Consequences
 
@@ -64,8 +69,12 @@ or a vendored file's header.
 - The signature still is the only release gate: nothing CI or Renovate does
   reaches a consumer that accepts signed tags only.
 - Repository settings this needs: the Renovate app installed for this
-  repository; *Allow GitHub Actions to create and approve pull requests*
-  (Settings → Actions → General), for the release PR.
+  repository (with Mend's *Scan and Alert*; *Scan Only* silences Renovate);
+  GitHub Actions allowed to create pull requests, for the release PR; the
+  approval policy for outside contributors at first-time contributors. As
+  API calls (the web UI moves):
+  `gh api -X PUT repos/{owner}/{repo}/actions/permissions/workflow -f default_workflow_permissions=read -F can_approve_pull_request_reviews=true`,
+  `gh api -X PUT repos/{owner}/{repo}/actions/permissions/fork-pr-contributor-approval -f approval_policy=first_time_contributors`.
 - `revendor.yml` runs with write access on Renovate's PRs. It executes nothing
   from the PR: `scripts/` must be unchanged there, and the vendored files are
   rewritten from upstream, not taken from the branch.
