@@ -21,7 +21,7 @@ here with its source, version and license when it is added.
   apart from the header comment.
 - Traefik Helm chart 42.3.1 (https://github.com/traefik/traefik-helm-chart),
   Apache-2.0. roles/traefik_install/files/crds/: the chart's CRDs, verbatim.
-- prometheus-operator v0.94.2
+- prometheus-operator v0.95.2
   (https://github.com/prometheus-operator/prometheus-operator), Apache-2.0.
   roles/prometheus_operator/files/bundle.yaml: release bundle, namespace
   changed to monitoring.
