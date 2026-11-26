@@ -6,6 +6,17 @@ release. Each release is a git tag `vX.Y.Z`.
 
 ## Unreleased
 
+## 1.7.6
+
+Deployed resources unchanged: the same charts at the same versions.
+
+- Fixed: `cert_manager` and `traefik_install` install their chart straight
+  from the repository URL (`chart_repo_url`), as `cnpg_operator` does, no
+  longer with `helm repo add` and `helm repo update`. Under `--check` the add
+  only pretended, so the update failed with "no repositories found" wherever
+  the repository was never added: a fresh workstation, a deployer's dry run.
+  A repository added by earlier runs stays and is no longer used.
+
 ## 1.7.5
 
 Dependency updates, prepared by CI from the merged Renovate PRs (ADR-0016).

@@ -1,22 +1,16 @@
 ---
 # A private CA chain (ADR-0007): self-signed bootstrap issuer -> 10-year root CA
 # -> ClusterIssuer homelab-ca, used by every Certificate.
-- name: Add helm repo for cert manager
-  kubernetes.core.helm_repository:
-    binary_path: "{{ helm_binary }}"
-    name: jetstack
-    force_update: true
-    repo_url: "{{ cert_manager_chart_url }}"
-    state: present
-
 - name: Install helm chart for cert manager
   kubernetes.core.helm:
     binary_path: "{{ helm_binary }}"
     name: cert-manager
     release_namespace: cert-manager
     create_namespace: true
-    update_repo_cache: true
-    chart_ref: jetstack/cert-manager
+    # Straight from the repository URL, no `helm repo add`: --check then works
+    # where the repository was never added (a fresh workstation, a deployer).
+    chart_repo_url: "{{ cert_manager_chart_url }}"
+    chart_ref: cert-manager
     chart_version: "{{ cert_manager_chart_version }}"
     state: present
     values:
