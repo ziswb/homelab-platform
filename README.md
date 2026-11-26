@@ -121,7 +121,7 @@ There is no Galaxy release; install a tagged version from git:
 collections:
   - name: https://github.com/ziswb/homelab-platform.git
     type: git
-    version: v1.7.4   # the latest vX.Y.Z tag, see CHANGELOG.md
+    version: v1.7.5   # the latest vX.Y.Z tag, see CHANGELOG.md
 ```
 
 ```bash

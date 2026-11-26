@@ -6,6 +6,13 @@ release. Each release is a git tag `vX.Y.Z`.
 
 ## Unreleased
 
+## 1.7.5
+
+Dependency updates, prepared by CI from the merged Renovate PRs (ADR-0016).
+
+- Updated: grafana/alloy Docker tag to v1.22.0 (#14)
+- Updated: Helm release traefik to v42.4.3 (#15)
+
 ## 1.7.4
 
 Dependency updates, prepared by CI from the merged Renovate PRs (ADR-0016).
