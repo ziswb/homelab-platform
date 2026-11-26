@@ -2,7 +2,7 @@
 # Chart version: every Helm chart's pin lives in its role's defaults (ADR-0012).
 # Re-vendor the CRDs in the same commit (files/crds/README.md).
 # renovate: datasource=helm depName=traefik registryUrl=https://traefik.github.io/charts
-traefik_install_chart_version: "42.3.1"
+traefik_install_chart_version: "42.4.3"
 
 # The dashboard's host name (Certificate and IngressRoute).
 traefik_install_dashboard_host: "traefik.{{ homelab_domain }}"
