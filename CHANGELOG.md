@@ -14,6 +14,9 @@ Dependency updates, prepared by CI from the merged Renovate PRs (ADR-0016).
 - Updated: prom/pushgateway Docker tag to v1.11.5 (#11)
 - Updated: quay.io/prometheus/node-exporter Docker tag to v1.13.1 (#9)
 - Updated: Helm release cloudnative-pg to v0.29.2 (#10)
+- Fixed (docs): 1.7.3's note was wrong. CI and Gitleaks on a commit that
+  `revendor.yml` or `prepare-release.yml` pushes wait for the maintainer's
+  approval on the PR whatever the approval policy (ADR-0016, amended again).
 
 ## 1.7.3
 
