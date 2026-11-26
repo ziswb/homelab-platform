@@ -6,6 +6,19 @@ release. Each release is a git tag `vX.Y.Z`.
 
 ## Unreleased
 
+No deployed file changes; applying it changes nothing on the hosts.
+
+- Added: Renovate (`renovate.json5`, ADR-0016) opens a PR per upstream update of
+  the role pins and the vendored components. Each pin carries a marker on the
+  line above it; in templates a Jinja comment, so every rendered file stays
+  byte-identical.
+- Added: `revendor.yml` / `scripts/revendor-pr.sh` re-vendor a component on its
+  Renovate PR with `refresh-vendored.sh`; `prepare-release.yml` /
+  `scripts/prepare-release.sh` open a release PR after Renovate merges. Neither
+  tags: the maintainer signs with `sign-release.sh` (ADR-0004).
+- CI and Gitleaks can be dispatched (`workflow_dispatch`), for branches the
+  two workflows push.
+
 ## 1.7.0
 
 Deployed files change only where `alloy_extra_log_files` is set; with its

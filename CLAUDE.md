@@ -56,9 +56,17 @@ required check. `gitleaks.yml` scans every branch; `release.yml` on a `v*` tag c
 are pinned in `.github/requirements-ci.txt`, actions by commit SHA with the tag as a
 comment, test-image bases by digest; Dependabot bumps all three weekly.
 
+Renovate (`renovate.json5`, ADR-0016) opens PRs for the role pins, each marked by a
+`# renovate:` line above it (in templates `{# renovate: … #}`, which renders to
+nothing), and for the vendored components. `revendor.yml` re-vendors a component on
+its Renovate PR with `refresh-vendored.sh`; `prepare-release.yml` opens the PR
+`release/next` after Renovate merges. Neither tags: sign with `sign-release.sh`. A new
+pin gets a marker.
+
 ## Collection rules
 
-- Releases are git tags `vX.Y.Z` (the maintainer tags); `galaxy.yml`'s `version` must
+- Releases are git tags `vX.Y.Z` (the maintainer signs them, ADR-0004; CI may prepare a
+  routine one as a PR, ADR-0016); `galaxy.yml`'s `version` must
   equal the tag. SemVer is tied to the argument specs: a new required variable, a renamed
   variable or a changed inventory group is a major release. `CHANGELOG.md` is written by
   hand.

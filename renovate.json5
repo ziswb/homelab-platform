@@ -1,0 +1,84 @@
+// Renovate for this collection (ADR-0016). It opens PRs and never merges: the
+// maintainer reviews and merges, then CI prepares a release PR, and a release
+// exists only once the maintainer has signed its tag (ADR-0004).
+//
+// Scope: the version pins in the roles, each marked by the comment above it,
+// and the vendored upstream files (by their header). Dependabot keeps the
+// GitHub Actions, the CI tools and the test images (.github/dependabot.yml).
+//
+// A vendored file is never edited by Renovate alone: its PR changes only the
+// version in the header (or, for the Traefik CRDs, the chart version), and
+// .github/workflows/revendor.yml rewrites the files with
+// scripts/refresh-vendored.sh on the PR, so the PR shows the upstream diff.
+{
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+  extends: ['config:recommended'],
+
+  // Only the pins marked below. The built-in managers would also pick up the
+  // vendored YAML's images and the GitHub Actions (Dependabot's).
+  enabledManagers: ['custom.regex'],
+
+  customManagers: [
+    {
+      // A pin carries a comment on the line above it, YAML or (in templates)
+      // Jinja, which renders to nothing:
+      //   # renovate: datasource=<ds> depName=<name> [registryUrl=<url>]
+      //   {# renovate: datasource=<ds> depName=<name> #}
+      customType: 'regex',
+      description: 'Pins marked with a renovate comment',
+      managerFilePatterns: ['/^roles/.+\\.(ya?ml|j2)$/'],
+      matchStrings: [
+        // An image reference on the next line: <image>:<tag> after a space,
+        // quote or `=` (`image: x:1.2`, `Image=x:1.2`).
+        '#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+registryUrl=(?<registryUrl>[^\\s#]+))?[^\\n]*\\n[^\\n]*?[\\s"\'=][a-z0-9][a-z0-9._/-]*:(?<currentValue>[^\\s"\'@]+)',
+        // A bare version: `key: "1.2.3"` (a chart version).
+        '#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+registryUrl=(?<registryUrl>[^\\s#]+))?[^\\n]*\\n\\s*[A-Za-z_][\\w.-]*\\s*:\\s*["\']?(?<currentValue>[^\\s"\'@/:]+)["\']?[ \\t]*\\n',
+      ],
+    },
+    {
+      customType: 'regex',
+      description: 'MetalLB, vendored',
+      managerFilePatterns: ['/^roles/metallb/files/metallb-native\\.yaml$/'],
+      matchStrings: ['^# Vendored by scripts/refresh-vendored\\.sh: metallb (?<currentValue>v\\d+\\.\\d+\\.\\d+)\\n'],
+      datasourceTemplate: 'github-releases',
+      depNameTemplate: 'metallb/metallb',
+    },
+    {
+      customType: 'regex',
+      description: 'prometheus-operator, vendored',
+      managerFilePatterns: ['/^roles/prometheus_operator/files/bundle\\.yaml$/'],
+      matchStrings: ['^# Vendored by scripts/refresh-vendored\\.sh: prometheus-operator (?<currentValue>v\\d+\\.\\d+\\.\\d+)\\n'],
+      datasourceTemplate: 'github-releases',
+      depNameTemplate: 'prometheus-operator/prometheus-operator',
+    },
+    {
+      // Two files carry this header; the PR bumps this one, the re-vendoring
+      // rewrites both.
+      customType: 'regex',
+      description: 'system-upgrade-controller, vendored',
+      managerFilePatterns: ['/^roles/k3s_upgrader/files/system-upgrade-controller\\.yaml$/'],
+      matchStrings: ['^# Vendored by scripts/refresh-vendored\\.sh: system-upgrade-controller (?<currentValue>v\\d+\\.\\d+\\.\\d+)\\n'],
+      datasourceTemplate: 'github-releases',
+      depNameTemplate: 'rancher/system-upgrade-controller',
+    },
+  ],
+
+  // The maintainer merges; nothing merges by itself.
+  automerge: false,
+  platformAutomerge: false,
+  // One PR per dependency: each is reviewed and re-vendored on its own.
+  separateMajorMinor: true,
+  // Stable releases only.
+  ignoreUnstable: true,
+
+  packageRules: [
+    {
+      // A major waits on the Dependency Dashboard. Its label makes the
+      // prepared release a minor one, so a consumer does not take it as a
+      // patch (ADR-0016).
+      matchUpdateTypes: ['major'],
+      dependencyDashboardApproval: true,
+      addLabels: ['update:major'],
+    },
+  ],
+}

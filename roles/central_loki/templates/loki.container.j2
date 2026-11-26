@@ -9,6 +9,7 @@ After=network-online.target
 
 [Container]
 ContainerName=loki
+{# renovate: datasource=docker depName=docker.io/grafana/loki #}
 Image=docker.io/grafana/loki:3.7.9
 PublishPort=3100:3100
 # No :Z. Each new container gets random MCS categories, so :Z relabelled the
