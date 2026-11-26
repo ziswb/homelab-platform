@@ -1,4 +1,4 @@
-# Vendored by scripts/refresh-vendored.sh: system-upgrade-controller v0.21.0
+# Vendored by scripts/refresh-vendored.sh: system-upgrade-controller v0.21.1
 # from https://github.com/rancher/system-upgrade-controller/releases/download/v0.21.0/system-upgrade-controller.yaml
 apiVersion: v1
 kind: Namespace
