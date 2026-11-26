@@ -52,14 +52,18 @@ or a vendored file's header.
   release as before.
 - Any other commit since the last tag (a fix, a feature, Unreleased notes)
   means the maintainer releases by hand, as before.
-- A commit either workflow pushes with `GITHUB_TOKEN` runs CI and Gitleaks
-  on its PR like any other (`pull_request`). GitHub counts its author,
-  `github-actions[bot]`, as an outside contributor: with the approval policy
-  at *all outside contributors* those runs wait for an approval, and the PR
-  stays blocked even with the required checks passed from a dispatched run.
-  The policy is *first-time contributors* (amended 2026-11-26; the first
-  version dispatched the checks instead, on the assumption that such a push
-  starts no workflow).
+- A commit either workflow pushes with `GITHUB_TOKEN` gets CI and Gitleaks
+  runs on its PR (`pull_request`), but GitHub holds them for an approval
+  (*action_required*), whatever the approval policy for outside
+  contributors; the PR stays blocked until they ran, and checks from a
+  dispatched run do not count. The maintainer approves them on the PR
+  (*Approve workflows to run*), once per pushed commit: on a re-vendored PR
+  and on the release PR after each update of it. A push with a GitHub App's
+  token would avoid it, at the cost of a private key in this public
+  repository's secrets; for a few clicks on PRs the maintainer opens anyway,
+  not worth it. (Amended 2026-11-26: the first version dispatched the checks,
+  on the assumption that such a push starts no workflow; the second took the
+  approval policy for the cause.)
 
 ## Consequences
 
@@ -70,11 +74,9 @@ or a vendored file's header.
   reaches a consumer that accepts signed tags only.
 - Repository settings this needs: the Renovate app installed for this
   repository (with Mend's *Scan and Alert*; *Scan Only* silences Renovate);
-  GitHub Actions allowed to create pull requests, for the release PR; the
-  approval policy for outside contributors at first-time contributors. As
-  API calls (the web UI moves):
-  `gh api -X PUT repos/{owner}/{repo}/actions/permissions/workflow -f default_workflow_permissions=read -F can_approve_pull_request_reviews=true`,
-  `gh api -X PUT repos/{owner}/{repo}/actions/permissions/fork-pr-contributor-approval -f approval_policy=first_time_contributors`.
+  GitHub Actions allowed to create pull requests, for the release PR. As an
+  API call (the web UI moves):
+  `gh api -X PUT repos/{owner}/{repo}/actions/permissions/workflow -f default_workflow_permissions=read -F can_approve_pull_request_reviews=true`.
 - `revendor.yml` runs with write access on Renovate's PRs. It executes nothing
   from the PR: `scripts/` must be unchanged there, and the vendored files are
   rewritten from upstream, not taken from the branch.

@@ -5,10 +5,8 @@
 #
 # pull_request_target: the workflow and the scripts come from main, never from
 # the PR; revendor-pr.sh refuses a PR that changes anything beyond the paths
-# re-vendoring writes. The pushed commit runs CI and Gitleaks as any PR commit
-# does (pull_request); that needs the repository's approval policy for outside
-# contributors at first_time_contributors, or every such run waits for an
-# approval (ADR-0016).
+# re-vendoring writes. CI and Gitleaks on the pushed commit wait for the
+# maintainer's approval on the PR (ADR-0016).
 name: Re-vendor
 
 on:

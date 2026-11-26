@@ -84,7 +84,8 @@ git push -q --force origin "HEAD:refs/heads/${BRANCH}"
 
 body="Prepared by CI (ADR-0016). Not a release until the tag is signed:
 
-1. Review and merge this PR (squash).
+1. Approve the waiting CI and Gitleaks runs (*Approve workflows to run*), then
+   review and merge this PR (squash).
 2. On main: \`git pull && scripts/sign-release.sh v${VERSION}\`
 3. \`git push origin v${VERSION}\`
 
