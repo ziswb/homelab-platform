@@ -1,12 +1,4 @@
 ---
-- name: Add helm repo for traefik
-  kubernetes.core.helm_repository:
-    binary_path: "{{ helm_binary }}"
-    name: traefik
-    force_update: true
-    repo_url: "{{ traefik_install_chart_url }}"
-    state: present
-
 - name: Apply Traefik CRDs
   # Helm applies a chart's crds/ on install only, never on upgrade, so the pinned
   # chart_version below cannot keep these current on its own. They are vendored
@@ -30,8 +22,10 @@
     name: traefik
     release_namespace: traefik
     create_namespace: true
-    update_repo_cache: true
-    chart_ref: traefik/traefik
+    # Straight from the repository URL, no `helm repo add`: --check then works
+    # where the repository was never added (a fresh workstation, a deployer).
+    chart_repo_url: "{{ traefik_install_chart_url }}"
+    chart_ref: traefik
     chart_version: "{{ traefik_install_chart_version }}"
     state: present
     values_files:
