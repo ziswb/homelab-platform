@@ -1,5 +1,5 @@
 # Vendored by scripts/refresh-vendored.sh: system-upgrade-controller v0.21.1
-# from https://github.com/rancher/system-upgrade-controller/releases/download/v0.21.0/system-upgrade-controller.yaml
+# from https://github.com/rancher/system-upgrade-controller/releases/download/v0.21.1/system-upgrade-controller.yaml
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -268,7 +268,7 @@ spec:
         envFrom:
         - configMapRef:
             name: default-controller-env
-        image: rancher/system-upgrade-controller:v0.21.0
+        image: rancher/system-upgrade-controller:v0.21.1
         imagePullPolicy: IfNotPresent
         name: system-upgrade-controller
         securityContext:
