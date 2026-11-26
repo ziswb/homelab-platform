@@ -37,6 +37,8 @@ for c in ${commits}; do
     IFS=$'\x1f' read -r n user labels title <<<"${pr:-}"
     case "${user:-}" in
     "renovate[bot]")
+        # "Update dependency foo to v2" -> "foo to v2"
+        title=${title#Update }; title=${title#dependency }
         entries+="- Updated: ${title} (#${n})"$'\n'
         [[ ",${labels}," == *",update:major,"* ]] && bump=minor
         ;;
@@ -62,6 +64,9 @@ note "preparing ${VERSION} (${bump}) from ${LAST}"
 git checkout -q -B "${BRANCH}" origin/main
 sed -i "s/^version: ${on_main}\$/version: ${VERSION}/" galaxy.yml
 grep -qx "version: ${VERSION}" galaxy.yml || { echo "galaxy.yml: version line not replaced" >&2; exit 1; }
+# The install example names the latest tag.
+sed -i "s/^\(    version: \)v[0-9.]*\(   # the latest vX.Y.Z tag\)/\1v${VERSION}\2/" README.md
+grep -q "^    version: v${VERSION}   # the latest" README.md || { echo "README.md: version line not replaced" >&2; exit 1; }
 summary="Dependency updates, prepared by CI from the merged Renovate PRs (ADR-0016)."
 [[ "${bump}" == minor ]] && summary+=" Contains an upstream major: read its release notes before applying."
 ENTRY="## ${VERSION}"$'\n\n'"${summary}"$'\n\n'"${entries}" python3 - <<'PY'
@@ -90,6 +95,3 @@ if [[ -n "${n}" ]]; then
 else
     gh pr create --base main --head "${BRANCH}" --title "Release v${VERSION}" --body "${body}"
 fi
-# A push with GITHUB_TOKEN starts no workflow: run the required checks.
-gh workflow run ci.yml --ref "${BRANCH}"
-gh workflow run gitleaks.yml --ref "${BRANCH}"
