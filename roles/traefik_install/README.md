@@ -32,4 +32,4 @@ the cluster in the current kubeconfig context).
 | `homelab_domain` | yes | | The site's domain. |
 | `homelab_lb_ips` | yes | | LoadBalancer addresses by service; this role reads `traefik`. |
 | `traefik_install_dashboard_host` | no | `traefik.{{ homelab_domain }}` | Dashboard host name. |
-| `traefik_install_chart_version` | no | `42.3.1` | Chart version; re-vendor the CRDs with it. |
+| `traefik_install_chart_version` | no | `42.4.3` | Chart version; re-vendor the CRDs with it. |
