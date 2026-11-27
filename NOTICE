@@ -19,7 +19,7 @@ here with its source, version and license when it is added.
 - MetalLB v0.16.2 (https://github.com/metallb/metallb), Apache-2.0.
   roles/metallb/files/metallb-native.yaml: release manifest, unchanged
   apart from the header comment.
-- Traefik Helm chart 42.4.3 (https://github.com/traefik/traefik-helm-chart),
+- Traefik Helm chart 43.0.0 (https://github.com/traefik/traefik-helm-chart),
   Apache-2.0. roles/traefik_install/files/crds/: the chart's CRDs, verbatim.
 - prometheus-operator v0.95.2
   (https://github.com/prometheus-operator/prometheus-operator), Apache-2.0.

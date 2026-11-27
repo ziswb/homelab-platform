@@ -1,7 +1,7 @@
 # Vendored Traefik CRDs
 
 Verbatim copy of `crds/` from the **traefik chart at the version pinned in
-`../../defaults/main.yml`** (`traefik_install_chart_version`). Currently **42.4.3**.
+`../../defaults/main.yml`** (`traefik_install_chart_version`). Currently **43.0.0**.
 
 ## Why these are vendored
 
