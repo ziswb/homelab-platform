@@ -60,7 +60,8 @@ Renovate (`renovate.json5`, ADR-0016) opens PRs for the role pins, each marked b
 `# renovate:` line above it (in templates `{# renovate: … #}`, which renders to
 nothing), and for the vendored components. `revendor.yml` re-vendors a component on
 its Renovate PR with `refresh-vendored.sh`; `prepare-release.yml` opens the PR
-`release/next` after Renovate merges. Neither tags: sign with `sign-release.sh`. A new
+`release/next` after a Renovate PR is merged (Renovate itself never merges). Neither
+tags: the maintainer merges the release PR and signs with `sign-release.sh`. A new
 pin gets a marker.
 
 ## Collection rules

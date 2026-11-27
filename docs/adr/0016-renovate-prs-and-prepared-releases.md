@@ -1,6 +1,8 @@
 # 0016 — Renovate opens the PRs; CI re-vendors and prepares releases; the maintainer signs
 
-- Status: accepted 2026-11-26
+- Status: accepted 2026-11-26, applied the same day (amended twice the same
+  day, see the last point of the decision); releases prepared this way
+  since v1.7.2
 - Date: 2026-11-26
 
 ## Context
