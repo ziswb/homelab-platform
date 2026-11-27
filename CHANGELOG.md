@@ -6,6 +6,23 @@ release. Each release is a git tag `vX.Y.Z`.
 
 ## Unreleased
 
+## 1.8.0
+
+Dependency updates from the merged Renovate PRs (ADR-0016), released by hand
+because a docs commit is among them. Contains an upstream major: read its
+release notes before applying.
+
+- Updated: docker.io/grafana/loki Docker tag to v3.7.11 (#18)
+- Updated: Helm release traefik to v43 (#19). The chart's major: it supports
+  only Traefik Proxy v3.7+ and Hub v3.21+. It brings Traefik Proxy v3.8.0
+  (was v3.7.20); the CRDs in `crds/` are unchanged from 42.4.3. With this
+  role's values the rendered manifests differ only in the image and the
+  version labels. Gateway API users: see Traefik's v3.8 migration notes
+  (Gateway API CRDs v1.7.0, `TCPRoute` on `v1`); this role does not enable
+  that provider.
+- Docs: ADR-0016 marked applied; CLAUDE.md says who merges Renovate PRs and
+  the release PR.
+
 ## 1.7.6
 
 Deployed resources unchanged: the same charts at the same versions.
